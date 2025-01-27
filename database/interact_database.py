@@ -23,11 +23,7 @@ def give_name(user_id: int):
 ##### ИСПРАВЛЕНИЕ ОШИБКИ, ОБНАРУЖЕННОЙ ПОЛЬЗОВАТЕЛЕМ #####
 def trouble_solved(trouble_id: int):
     cursor.execute(f'UPDATE Troubles SET solved = True WHERE trouble_id = {trouble_id}')
-
-
-##### НАЗНАЧЕНИЕ ПОЛЬЗОВАТЕЛЯ АДМИНОМ #####
-def make_admin(user_id: int):
-    cursor.execute(f'UPDATE Users SET is_admin = True Where user_id = {user_id}')
+    db.commit()
 
 
 ##### ЯЗЫК ПОЛЬЗОВАТЕЛЯ ПО ЕГО ID #####
@@ -38,3 +34,24 @@ def user_language(user_id: int):
 ##### ПРОВЕРЯЕТ ЗАРЕГЕСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
 def user_in_data(user_id: int):
     return user_id in [row[0] for row in cursor.execute('SELECT user_id FROM Users').fetchall()]
+
+
+##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'feedback_id. feedback_text \n\n ....' СО ВСЕМИ ОТЗЫВАМИ #####
+def all_feedback():
+    feedback = ''
+    if len(cursor.execute('SELECT * FROM Feedback').fetchall()) > 0:
+        for row in cursor.execute('SELECT * FROM Feedback'):
+            feedback += str(row[0]) + '. ' + row[1] + '\n\n'
+    else:
+        feedback = 'Отзывов пока нет'
+    return feedback
+
+
+##### ЗАНЕСЕНИЕ НОВОГО ОТЗЫВА В БАЗУ ДАННЫХ #####
+def new_feedback(text: str):
+    cursor.execute(f"INSERT INTO Feedback (feedback_text) VALUES ('{text}')")
+    db.commit()
+
+##### ПЕРЕНОСИТ ОТЗЫВ ИЗ ТАБЛИЦЫ С ОТЗЫВАМИ В ТАБЛИЦУ С ПРОБЛЕМАМИ И ПРИСВАИВАЕТ ЕЙ СТАТУС НЕРЕШЕННОЙ #####
+def new_trouble(trouble_id: int):
+    pass

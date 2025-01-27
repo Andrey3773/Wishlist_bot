@@ -9,7 +9,8 @@ from config_data.config import Config, load_config
 from handlers import (mistakes_handlers as mistakes,
                       admin_handlers as admin,
                       user_handlers as user,
-                      command_handlers as command)
+                      command_handlers as command,
+                      private_handler as private)
 
 ##### ФУНКЦИЯ КОНФИГУРИРОВАНИЯ И ЗАПУСКА БОТА #####
 async def main():
@@ -20,6 +21,11 @@ async def main():
     # Инициализация бота и диспетчера
     bot = Bot(token=config.bot.token)
     dp = Dispatcher()
+
+
+    # Этот роутер не влияет на функционал бота и добавлен из личных пожеланий
+    # dp.include_router(private.router)
+
 
     # Инициализация всех необходимых роутеров
     dp.include_router(admin.router)

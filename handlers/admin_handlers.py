@@ -1,9 +1,9 @@
 #######################################################################################################################
 ############################# ФАЙЛ С ХЭНДЛЕРАМИ, ОТВЕЧАЮЩИМИ ЗА ВЗАИМОДЕЙСТВИЕ С АДМИНАМИ #############################
 #######################################################################################################################
-from tracemalloc import Frame
 
-from aiogram import Router
+
+from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -12,10 +12,19 @@ from filters.filters import IsAdmin, IsUserInData
 from lexicon.lexicon import LEXICON_ADMIN
 from database.interact_database import user_language
 from handlers.fsm import FSMCommands
+from database import interact_database as data
+from asyncio import sleep
+
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
 router = Router()
+
+
+##### ИНИЦИАЛИЗАЦИЯ КОНФИГУРАТОРА, ЧТОБЫ ДОСТАТЬ ИЗ НЕГО БОТА #####
+config: Config = load_config('.env')
+bot = Bot(token=config.bot.token)
+
 
 ##### ИНИЦИАЛИЗАЦИЯ КОНФИГУРАТОРА, ЧТОБЫ ДОСТАТЬ ИЗ НЕГО СПИСОК АДМИНОВ #####
 admins_config: Config = load_config('.env')
@@ -24,7 +33,10 @@ admins_config: Config = load_config('.env')
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ ПОВТОРНОГО ВЫЗОВА КОМАНДЫ START ОТ АДМИНОВ ######
 @router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admins))
 async def admin_start_again(message: Message):
-    await message.answer(LEXICON_ADMIN['/start_again'][user_language(message.from_user.id)])
+    sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message.from_user.id)])
+    await sleep(60)
+    await message.delete()
+    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ START В ШТАТНОМ РЕЖИМЕ ДЛЯ АДМИНОВ #####
@@ -37,4 +49,7 @@ async def start_command(message: Message, state: FSMContext):
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА ВЫВОД ФИДБЭКА ПОЛЬЗОАТЕЛЕЙ ДЛЯ АДМИНОВ #####
 @router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admins))
 async def give_feedback(message: Message):
-    await message.answer(LEXICON_ADMIN['/feedback'][user_language(message.from_user.id)])
+    sent_message = await message.answer(data.all_feedback())
+    await sleep(60)
+    await message.delete()
+    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
