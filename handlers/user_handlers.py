@@ -1,31 +1,28 @@
-from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
-from aiogram.types import Message
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.state import default_state, State, StatesGroup
-from aiogram.fsm.context import FSMContext
-from lexicon.lexicon import LEXICON_COMMAND, LEXICON
-from database import interact_database as db
+#######################################################################################################################
+################### ФАЙЛ С ХЭНДЛЕРАМИ, ОТВЕЧАЮЩИМИ ЗА ШТАТНУЮ РАБОТУ БОТА С ОБЫЧНЫМИ ПОЛЬЗОВАТЕЛЯМИ ###################
+#######################################################################################################################
 
-# инициализация роутера
+from aiogram import Router, F
+from aiogram.filters import StateFilter
+from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
+from lexicon.lexicon import LEXICON
+from database import interact_database as data
+from handlers.fsm import FSMCommands
+from filters.filters import IsNameCorrect
+
+
+##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
 router = Router()
 
-storage = MemoryStorage()
 
-class FSM(StatesGroup):
-    fill_name = State()
-
-@router.message(Command(commands='start'), StateFilter(default_state))
-async def start_command(message: Message, state: FSMContext):
-    await message.answer(LEXICON_COMMAND['/start']['ru'])
-    await state.set_state(FSM.fill_name)
-
-@router.message(StateFilter(FSM.fill_name), F.text.isalpha())
-async def correct_name(message: Message, state: FSMContext):
-    await message.answer(LEXICON['correct_name']['ru'])
-    db.new_user(message.from_user.id, message.text)
+##### ХЭНДЛЕР ОТЕЧАЮЩИЙ ЗА УСПЕШНУЮ РЕГИСТРАЦИЮ #####
+@router.message(StateFilter(FSMCommands.fill_name), IsNameCorrect())
+async def correct_registration(message: Message, state: FSMContext):
+    data.new_user(message.from_user.id, message.text)
+    await message.answer(LEXICON['correct_registration'][data.user_language(message.from_user.id)][0] +
+                         data.give_name(int(message.from_user.id)) +
+                         LEXICON['correct_registration'][data.user_language(message.from_user.id)][1])
     await state.clear()
 
-@router.message(StateFilter(FSM.fill_name))
-async def incorrect_name(message: Message, state: FSMContext):
-    await message.answer(LEXICON['incorrect_name']['ru'])
+

@@ -4,3 +4,7 @@
 
 # Data
 database/database.sqlite
+
+# Files
+test.py
+clear_database.py
