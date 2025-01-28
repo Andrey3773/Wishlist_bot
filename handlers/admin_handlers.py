@@ -33,7 +33,7 @@ admins_config: Config = load_config('.env')
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ ПОВТОРНОГО ВЫЗОВА КОМАНДЫ START ОТ АДМИНОВ ######
 @router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admins))
 async def admin_start_again(message: Message):
-    sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message.from_user.id)])
+    sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message)])
     await sleep(60)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)

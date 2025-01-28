@@ -1,11 +1,10 @@
 ######################################################################################################################
 ############## ФАЙЛ С ХЭНДЛЕРАМИ, ОТВЕЧАЮЩИМИ ЗА ОБРАБОТКУ НЕКОРРЕТНЫХ ДЕЙСТВИЙ СО СТОРОНЫ ПОЛЬЗОВАТЕЛЯ ##############
 ######################################################################################################################
-from os import fstat
+
 
 from aiogram import Router, Bot
 from aiogram.filters import StateFilter
-from aiogram.fsm.state import default_state
 from aiogram.types import Message
 from lexicon.lexicon import WRONG_LEXICON
 from handlers.fsm import FSMCommands

@@ -1,4 +1,5 @@
 import sqlite3
+from aiogram.types import Message, CallbackQuery
 
 
 ##### СОЕДИНЕНИЕ С ФАЙЛОМ, В КОТОРОМ НАХОДИТСЯ БАЗА ДАННЫХ #####
@@ -7,7 +8,8 @@ cursor = db.cursor()
 
 
 ##### ЗАНЕСЕНИЕ НОВОГО ПОЛЬЗОВАТЕЛЯ В БАЗУ ДАННЫХ #####
-def new_user(user_id: int, user_name: str) -> None:
+def new_user(message: Message|CallbackQuery, user_name: str) -> None:
+    user_id = message.from_user.id
     cursor.execute('SELECT user_id FROM Users')
     if user_id not in [row[0] for row in cursor.fetchall()]:
         cursor.execute('INSERT INTO Users (user_id, user_name, language) VALUES (?, ?, ?)',
@@ -16,23 +18,27 @@ def new_user(user_id: int, user_name: str) -> None:
 
 
 ##### ИМЯ ПОЛЬЗОВАТЕЛЯ ПО ЕГО ID #####
-def give_name(user_id: int):
+def give_name(message: Message|CallbackQuery):
+    user_id = message.from_user.id
     return cursor.execute(f'SELECT user_name FROM Users WHERE user_id = {user_id}').fetchone()[0]
 
 
 ##### ИСПРАВЛЕНИЕ ОШИБКИ, ОБНАРУЖЕННОЙ ПОЛЬЗОВАТЕЛЕМ #####
-def trouble_solved(trouble_id: int):
+def trouble_solved(message: Message|CallbackQuery):
+    trouble_id = int(message.text)
     cursor.execute(f'UPDATE Troubles SET solved = True WHERE trouble_id = {trouble_id}')
     db.commit()
 
 
 ##### ЯЗЫК ПОЛЬЗОВАТЕЛЯ ПО ЕГО ID #####
-def user_language(user_id: int):
+def user_language(message: Message|CallbackQuery):
+    user_id = message.from_user.id
     return cursor.execute(f'SELECT language FROM Users WHERE user_id = {user_id}').fetchone()[0]
 
 
 ##### ПРОВЕРЯЕТ ЗАРЕГЕСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
-def user_in_data(user_id: int):
+def user_in_data(message: Message|CallbackQuery):
+    user_id = message.from_user.id
     return user_id in [row[0] for row in cursor.execute('SELECT user_id FROM Users').fetchall()]
 
 
@@ -48,7 +54,8 @@ def all_feedback():
 
 
 ##### ЗАНЕСЕНИЕ НОВОГО ОТЗЫВА В БАЗУ ДАННЫХ #####
-def new_feedback(text: str):
+def new_feedback(message: Message|CallbackQuery):
+    text = str(message.text)
     cursor.execute(f"INSERT INTO Feedback (feedback_text) VALUES ('{text}')")
     db.commit()
 

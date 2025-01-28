@@ -28,7 +28,7 @@ bot = Bot(token=config.bot.token)
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПОТОРНЫЙ ВЫЗОВ КОМАНДЫ START #####
 @router.message(Command(commands='start'), IsUserInData())
 async def repeat_start_command(message: Message):
-    sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(message.from_user.id)],
+    sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(message)],
                                         parse_mode='HTML')
 
     await sleep(60)
@@ -50,7 +50,7 @@ async def start_command(message: Message, state: FSMContext):
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ HELP В ШТАТНОМ РЕЖИМЕ ДЛЯ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ #####
 @router.message(Command(commands='help'))
 async def help_command(message: Message):
-    sent_message = await message.answer(LEXICON_COMMAND['/help'][data.user_language(message.from_user.id)])
+    sent_message = await message.answer(LEXICON_COMMAND['/help'][data.user_language(message)])
 
     await sleep(60)
     await message.delete()
@@ -60,7 +60,7 @@ async def help_command(message: Message):
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ FEEDBACK В ШТАТНОМ РЕЖИМЕ ДЛЯ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ #####
 @router.message(Command(commands='feedback'))
 async def feedback_command(message: Message, state: FSMContext):
-    sent_message = await message.answer(LEXICON_COMMAND['/feedback'][data.user_language(message.from_user.id)])
+    sent_message = await message.answer(LEXICON_COMMAND['/feedback'][data.user_language(message)])
     await state.set_state(FSMCommands.fill_feedback)
 
     await sleep(30)
