@@ -13,3 +13,12 @@ storage = MemoryStorage()
 class FSMCommands(StatesGroup):
     fill_name = State()
     fill_feedback = State()
+
+
+##### МАШИНА СОСТОЯНИЙ ПРИ ПЕРЕМЕЩЕНИИ ПО МЕНЮ #####
+class FSMMenu(StatesGroup):
+    in_main_menu = State()
+    in_my_list = State()
+    in_my_groups = State()
+    fill_new_group = State()
+    fill_password = State()
