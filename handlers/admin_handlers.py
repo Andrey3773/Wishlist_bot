@@ -34,7 +34,7 @@ admins_config: Config = load_config('.env')
 @router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admins))
 async def admin_start_again(message: Message):
     sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message)])
-    await sleep(60)
+    await sleep(10)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
@@ -50,6 +50,6 @@ async def start_command(message: Message, state: FSMContext):
 @router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admins))
 async def give_feedback(message: Message):
     sent_message = await message.answer(data.all_feedback())
-    await sleep(60)
+    await sleep(10)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)

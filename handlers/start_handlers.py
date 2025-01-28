@@ -8,12 +8,13 @@ from aiogram.filters import Command, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.state import default_state
 from aiogram.fsm.context import FSMContext
-from lexicon.lexicon import LEXICON_COMMAND
+from lexicon.lexicon import LEXICON_COMMAND, LEXICON
 from database import interact_database as data
 from handlers.fsm import FSMCommands
-from filters.filters import IsUserInData
+from filters.filters import IsUserInData, IsNameCorrect
 from config_data.config import Config, load_config
 from asyncio import sleep
+from keyboards.keyboards import main_menu
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
@@ -31,7 +32,7 @@ async def repeat_start_command(message: Message):
     sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(message)],
                                         parse_mode='HTML')
 
-    await sleep(60)
+    await sleep(10)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
@@ -46,23 +47,14 @@ async def start_command(message: Message, state: FSMContext):
     await state.set_state(FSMCommands.fill_name)
 
 
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ HELP В ШТАТНОМ РЕЖИМЕ ДЛЯ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ #####
-@router.message(Command(commands='help'))
-async def help_command(message: Message):
-    sent_message = await message.answer(LEXICON_COMMAND['/help'][data.user_language(message)])
-
-    await sleep(60)
-    await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ FEEDBACK В ШТАТНОМ РЕЖИМЕ ДЛЯ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ #####
-@router.message(Command(commands='feedback'))
-async def feedback_command(message: Message, state: FSMContext):
-    sent_message = await message.answer(LEXICON_COMMAND['/feedback'][data.user_language(message)])
-    await state.set_state(FSMCommands.fill_feedback)
-
-    await sleep(30)
-    await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+##### ХЭНДЛЕР ОТЕЧАЮЩИЙ ЗА УСПЕШНУЮ РЕГИСТРАЦИЮ #####
+@router.message(StateFilter(FSMCommands.fill_name), IsNameCorrect())
+async def correct_registration(message: Message, state: FSMContext):
+    data.new_user(message, message.text)
+    await message.answer(LEXICON['correct_registration'][data.user_language(message)][0] +
+                         data.give_name(message) +
+                         LEXICON['correct_registration'][data.user_language(message)][1])
+    await state.clear()
+    await message.answer(text=LEXICON['help'][data.user_language(message)])
+    await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
+                                     reply_markup=main_menu(data.user_language(message)))

@@ -22,7 +22,7 @@ class IsAdmin(BaseFilter):
 ##### ФИЛЬТР, ЧТОБЫ ЛОВИТЬ УЖЕ ЗАРЕГИСТРИРОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ #####
 class IsUserInData(BaseFilter):
     async def __call__(self, message: Message):
-        return data.user_in_data(int(message.from_user.id))
+        return data.user_in_data(message)
 
 
 ##### ФИЛЬТР, ПРОЕРЯЮЩИЙ КОРРЕКТНОСТЬ ИМЕНИ ПОЛЬЗОВАТЕЛЯ #####

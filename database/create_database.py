@@ -43,8 +43,7 @@ def create_database():
     CREATE TABLE IF NOT EXISTS Accesses (
         access_id INTEGER PRIMARY KEY,
         group_id INTEGER,
-        user_id INTEGER,
-        user_name TEXT
+        user_id INTEGER
     )
     ''')
 

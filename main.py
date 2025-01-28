@@ -9,7 +9,7 @@ from config_data.config import Config, load_config
 from handlers import (mistakes_handlers as mistakes,
                       admin_handlers as admin,
                       user_handlers as user,
-                      command_handlers as command,
+                      start_handlers as start,
                       private_handler as private)
 
 ##### ФУНКЦИЯ КОНФИГУРИРОВАНИЯ И ЗАПУСКА БОТА #####
@@ -29,7 +29,7 @@ async def main():
 
     # Инициализация всех необходимых роутеров
     dp.include_router(admin.router)
-    dp.include_router(command.router)
+    dp.include_router(start.router)
     dp.include_router(user.router)
     dp.include_router(mistakes.router)
 

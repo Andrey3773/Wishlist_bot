@@ -19,6 +19,6 @@ def main_menu(language: str) -> InlineKeyboardMarkup:
                              callback_data=f"{main_menu_lexicon['callback'][i]}"
                              ) for i in range(len(main_menu_lexicon[language]))
     ]
-    kb_builder.row(*buttons, width=1)
+    kb_builder.row(*buttons, width=2)
     return kb_builder.as_markup(resize_keyboard=True)
 

@@ -10,9 +10,19 @@ KEYBOARD_LEXICON: dict[str: dict[str: str|list]] = {
         'eng': ''
     },
     'main_menu': {
-        'ru': ['Мой вишлист', 'Мои группы', 'Создать группу', 'Вступить в группу'],
+        'ru': ['Мой вишлист', 'Мои группы', 'Создать группу', 'Вступить в группу', 'Оставить отзыв'],
         'eng': [],
-        'callback': ['my_list', 'my_groups', 'new_group', 'in_group']
+        'callback': ['my_list', 'my_groups', 'new_group', 'in_group', 'feedback']
+    },
+    'new_gift': {
+        'ru': 'Добавить идею',
+        'eng': '',
+        'callback': 'new_gift'
+    },
+    'delete_gift': {
+        'ru': 'Удалить идею',
+        'eng': '',
+        'callback': 'kill_gift'
     }
 }
 
@@ -30,10 +40,6 @@ LEXICON_COMMAND: dict[str: dict[str: str|list]] = {
         'ru': 'Вы уже зарегистрированы.\n'
               'Чтобы посмотреть информацию о боте, вызовите команду /help.\n\n'
               '<i>можно просто тыкнуть на нее в сообщении</i>',
-        'eng': ''
-    },
-    '/help': {
-        'ru': 'Пока что просто заглушка для команды /help',
         'eng': ''
     },
     '/feedback': {
@@ -60,7 +66,11 @@ LEXICON: dict[str: dict[str: str|list]] = {
     'main_menu': {
         'ru': 'Итак, что вы хотите сделать?',
         'eng': ['', '']
-    }
+    },
+    'help': {
+        'ru': 'Пока что просто заглушка для команды /help',
+        'eng': ''
+    },
 }
 
 
