@@ -12,7 +12,7 @@ from aiogram.fsm.context import FSMContext
 from config_data.config import Config, load_config
 from asyncio import sleep
 from database import interact_database as data
-from keyboards.keyboards import main_menu
+from keyboards.keyboards import main_menu_keyboard
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
@@ -48,7 +48,7 @@ async def command_help(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(text=LEXICON['help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                                     reply_markup=main_menu(data.user_language(message)))
+                         reply_markup=main_menu_keyboard(data.user_language(message)))
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВСЕ НЕПРЕДУСМОТРЕННЫЕ ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ #####

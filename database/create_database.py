@@ -24,7 +24,8 @@ def create_database():
         gift_id INTEGER PRIMARY KEY,
         group_id INTEGER,
         user_id INTEGER,
-        is_free BOOL
+        is_free BOOL,
+        gift_name TEXT
     )
     ''')
 

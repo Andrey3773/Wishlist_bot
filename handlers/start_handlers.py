@@ -14,7 +14,7 @@ from handlers.fsm import FSMCommands
 from filters.filters import IsUserInData, IsNameCorrect
 from config_data.config import Config, load_config
 from asyncio import sleep
-from keyboards.keyboards import main_menu
+from keyboards.keyboards import main_menu_keyboard
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
@@ -57,4 +57,4 @@ async def correct_registration(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(text=LEXICON['help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                                     reply_markup=main_menu(data.user_language(message)))
+                         reply_markup=main_menu_keyboard(data.user_language(message)))

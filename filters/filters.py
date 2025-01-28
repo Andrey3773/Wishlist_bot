@@ -38,3 +38,12 @@ class IsNameCorrect(BaseFilter):
         if text.count(' ') > 1:
             flag = False
         return flag
+
+
+##### ФИЛЬТР, ПРОВЕРЯЮЩИЙ КОРРЕКТНОСТЬ УДАЛЯЕМОЙ ИДЕИ ДЛЯ ПОДАРКА #####
+class IsDeletedIdeaCorrect(BaseFilter):
+    async def __call__(self, message: Message):
+        if message.text is not None:
+            return message.text in data.all_my_gifts(message)
+        else:
+            return False

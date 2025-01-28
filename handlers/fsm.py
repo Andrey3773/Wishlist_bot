@@ -17,8 +17,7 @@ class FSMCommands(StatesGroup):
 
 ##### МАШИНА СОСТОЯНИЙ ПРИ ПЕРЕМЕЩЕНИИ ПО МЕНЮ #####
 class FSMMenu(StatesGroup):
-    in_main_menu = State()
-    in_my_list = State()
-    in_my_groups = State()
+    fill_new_idea = State()
+    fill_deleted_idea = State()
     fill_new_group = State()
     fill_password = State()

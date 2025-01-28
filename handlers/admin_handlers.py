@@ -48,8 +48,5 @@ async def start_command(message: Message, state: FSMContext):
 
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА ВЫВОД ФИДБЭКА ПОЛЬЗОАТЕЛЕЙ ДЛЯ АДМИНОВ #####
 @router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admins))
-async def give_feedback(message: Message):
-    sent_message = await message.answer(data.all_feedback())
-    await sleep(10)
-    await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+async def give_feedback(message: Message, state: FSMContext):
+    await message.answer(data.all_feedback())
