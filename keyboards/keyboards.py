@@ -19,7 +19,7 @@ def main_menu_keyboard(language: str) -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = [
         InlineKeyboardButton(text=f"{main_menu_lexicon[language][i]}",
                              callback_data=f"{main_menu_lexicon['callback'][i]}"
-                             ) for i in range(len(main_menu_lexicon[language]))
+                             ) for i in main_menu_lexicon[language]
     ]
     kb_builder.row(*buttons, width=2)
     return kb_builder.as_markup(resize_keyboard=True)

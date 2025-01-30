@@ -3,7 +3,7 @@
 ######################################################################################################################
 
 
-import sqlite3
+import sqlite3, string, random
 from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON
 
@@ -42,13 +42,13 @@ def new_user(message: Message|CallbackQuery, user_name: str) -> None:
         db.commit()
 
 
-##### ИМЯ ПОЛЬЗОВАТЕЛЯ ПО ЕГО ID #####
+##### ВОЗВРАЩАЕТ ИМЯ ПОЛЬЗОВАТЕЛЯ #####
 def give_name(message: Message|CallbackQuery) -> str:
     user_id = message.from_user.id
     return cursor.execute(f'SELECT user_name FROM Users WHERE user_id = {user_id}').fetchone()[0]
 
 
-##### ЯЗЫК ПОЛЬЗОВАТЕЛЯ ПО ЕГО ID #####
+##### ВОЗВРАЩАЕТ ЯЗЫК ПОЛЬЗОВАТЕЛЯ #####
 def user_language(message: Message|CallbackQuery) -> str:
     user_id = message.from_user.id
     return cursor.execute(f'SELECT language FROM Users WHERE user_id = {user_id}').fetchone()[0]
@@ -107,16 +107,18 @@ def all_my_gifts(message: Message|CallbackQuery) -> str:
 
 
 ##### ДОБАВЛЯЕТ ПОДАРОК БЕЗ ГРУППЫ (В ОБЩИЙ ДОСТУП) #####
-def my_own_new_gift(message: Message|CallbackQuery, gift_name: str) -> None:
+def my_own_new_gift(message: Message|CallbackQuery) -> None:
     user_id = message.from_user.id
+    gift_name = str(message.text)
     my_own_group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE group_name = '{str(user_id)}'").fetchone()[0]
     cursor.execute(f"INSERT INTO Gifts (group_id, user_id, is_free, gift_name) "
                    f"VALUES (?, ?, ?, ?)", (my_own_group_id, user_id, False, gift_name))
     db.commit()
 
 
-##### УДАЛЕНИЕ ПОДАРКА ПО ЕГО НАЗВАНИЮ #####
-def delete_my_own_gift(message: Message|CallbackQuery):
+##### УДАЛЕНИЕ ПОДАРКА (ПОЛЬЗОВАТЕЛЬ ОТПРАВЛЯЕТ ЕГО НАЗВАНИЕ) #####
+# TODO сделать адекватное удаление, а не просто копипастингом из списка
+def delete_my_own_gift(message: Message|CallbackQuery) -> None:
     user_id = message.from_user.id
     gift_name = message.text
     cursor.execute(f"DELETE FROM Gifts WHERE user_id = {user_id} AND gift_name = '{gift_name}'")
@@ -125,6 +127,62 @@ def delete_my_own_gift(message: Message|CallbackQuery):
 
 
 ################################################# РАБОТА С ГРУППАМИ  ##################################################
+
+##### СОЗДАЁТ НОВУЮ ГРУППУ #####
+def new_group(message: Message|CallbackQuery) -> None:
+    group_name = str(message.text)
+    while True:
+        group_password = ''.join(
+            random.choice(string.ascii_letters + string.digits)
+            for _ in range(16)
+        )
+        if not(group_password in [i[0] for i in cursor.execute('SELECT password FROM Groups').fetchall()]):
+            break
+
+    owner_id = int(message.from_user.id)
+    cursor.execute(
+        f"INSERT INTO Groups (group_name, password, owner_id) VALUES (?, ?, ?)",
+        (group_name, group_password, owner_id)
+    )
+    db.commit()
+    cursor.execute(
+        f"INSERT INTO Accesses (group_id, user_id) VALUES (?, ?)",
+        (cursor.execute(
+            f"SELECT group_id FROM Groups WHERE password = '{group_password}'"
+        ).fetchone()[0], owner_id)
+    )
+    db.commit()
+
+
+##### ПРОЕРЯЕТ, ЕСТЬ ЛИ ПОЛЬЗОАТЕЛЬ В ГРУППЕ #####
+def is_user_in_group(message: Message) -> bool:
+    password = str(message.text)
+    user_id = int(message.from_user.id)
+    group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{password}'").fetchone()[0]
+
+    return [group_id, user_id] in [[row[0], row[1]] for row in
+                                cursor.execute(
+                                    f"SELECT group_id, user_id FROM Accesses"
+                                ).fetchall()]
+
+
+##### ДОБАВЛЯЕТ ПОЛЬЗОВАТЕЛЯ В ГРУППУ, ПАРОЛЬ К КОТОРОЙ ОН ВВЕЛ #####
+def add_user_in_group(message: Message) -> None:
+    password = str(message.text)
+    user_id = int(message.from_user.id)
+    group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{password}'").fetchone()[0]
+
+    cursor.execute(
+        f"INSERT INTO Accesses (group_id, user_id) VALUES (?, ?)",
+        (group_id, user_id)
+    )
+    db.commit()
+
+
+##### ВОЗВРАЩАЕТ ПАРОЛЬ ОТ ГРУППЫ #####
+def give_group_password(message: Message|CallbackQuery) -> str:
+    pass
+
 
 
 ################################################## РАБОТА С ОТЗЫВАМИ ##################################################
