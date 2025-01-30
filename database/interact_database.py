@@ -14,6 +14,29 @@ cursor = db.cursor()
 
 
 
+############################################### МЕЛКИЕ СЛУЖЕБНЫЕ ФУНКЦИИ ###############################################
+
+##### ВОЗВРАЩАЕТ USER_NAME ПО ЕГО ID ######
+def get_user_name(user_id: int) -> str:
+    return cursor.execute(f"SELECT user_name FROM Users WHERE user_id = {user_id}").fetchone()[0]
+
+
+##### ВОЗВРАЩАЕТ GROUP_NAME ПО ЕГО ID ######
+def get_group_name(message: Message|CallbackQuery, group_id: int) -> str:
+    user_id = str(message.from_user.id)
+    group_name = cursor.execute(f"SELECT group_name FROM Groups WHERE group_id = {group_id}").fetchone()[0]
+    if group_name == user_id:
+        return LEXICON['my_own_group'][user_language(message)]
+    else:
+        return group_name
+
+
+##### ВОЗВРАЩАЕТ GIFT_NAME ПО ЕГО ID ######
+def get_gift_name(gift_id: int) -> str:
+    return cursor.execute(f"SELECT gift_name FROM Gifts WHERE gift_id = {gift_id}").fetchone()[0]
+
+
+
 ############################################### РАБОТА С ПОЛЬЗОВАТЕЛЯМИ ###############################################
 
 ##### ПРОВЕРЯЕТ ЗАРЕГЕСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
@@ -65,43 +88,18 @@ def new_feedback(message: Message|CallbackQuery) -> None:
 ################################################# РАБОТА С ПОДАРКАМИ ##################################################
 
 ##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'group_name_1:\n gift_name_1\n gift_name_2\n\n group_name_1:.... #####
-def all_my_gifts(message: Message|CallbackQuery) -> str:
-    user_id = message.from_user.id
+def all_my_own_gifts(message: Message | CallbackQuery) -> str:
+    user_id = int(message.from_user.id)
+    all_gifts = all_accessible_gifts(message)
+
     gift_list = ''
-    result: dict[str: list[str]] = {}
 
-    if cursor.execute(f'SELECT COUNT(user_id)'
-                      f'FROM Gifts '
-                      f'WHERE user_id = {user_id}').fetchone()[0] > 0:
+    for group_id in all_gifts.keys():
+        gift_list += f'<b>{get_group_name(message, group_id)}</b>:\n'
+        for gift_id in all_gifts[group_id][user_id]:
+            gift_list += '    ' + get_gift_name(gift_id) + '\n'
+        gift_list += '\n'
 
-        group_gifts = [
-            [i for i in row] for row in cursor.execute(f"SELECT group_name, gift_name "
-                                                       f"FROM Groups "
-                                                       f"INNER JOIN Gifts ON Groups.group_id = Gifts.group_id "
-                                                       f"WHERE Gifts.user_id = {user_id}").fetchall()
-        ]
-
-        for row in group_gifts:
-            if row[0] == str(user_id):
-                group_name = LEXICON['my_own_group'][user_language(message)]
-            else:
-                group_name = str(row[0])
-            if group_name in result.keys():
-                result[group_name].append(str(row[1]))
-            else:
-                result[group_name] = []
-                result[group_name].append(str(row[1]))
-
-        for group in result.keys():
-            if group == str(user_id):
-                group = LEXICON['my_own_group'][user_language(message)]
-            gift_list += f'<b>{group}</b>:\n'
-            for gift in result[group]:
-                gift_list += f'    {gift}\n'
-            gift_list += '\n'
-
-    else:
-        gift_list = LEXICON['no_gifts'][user_language(message)]
 
     return gift_list
 
@@ -119,14 +117,20 @@ def is_user_has_own_gift(message: Message|CallbackQuery) -> bool:
                          ).fetchall()]
 
 
-##### ДОБАВЛЯЕТ ПОДАРОК БЕЗ ГРУППЫ (В ОБЩИЙ ДОСТУП) #####
+##### ДОБАВЛЯЕТ ПОДАРОК В ОБЩИЙ ДОСТУП #####
 def my_own_new_gift(message: Message|CallbackQuery) -> None:
     user_id = message.from_user.id
     gift_name = str(message.text)
-    my_own_group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE group_name = '{str(user_id)}'").fetchone()[0]
-    cursor.execute(f"INSERT INTO Gifts (group_id, user_id, is_free, gift_name) "
-                   f"VALUES (?, ?, ?, ?)", (my_own_group_id, user_id, False, gift_name))
-    db.commit()
+
+    accessible_group_ids = [row[0] for row in
+                            cursor.execute(
+                                f"SELECT group_id FROM Accesses "
+                                f"WHERE user_id = {user_id}"
+                            ).fetchall()]
+    for group_id in accessible_group_ids:
+        cursor.execute(f"INSERT INTO Gifts (group_id, user_id, is_free, gift_name) "
+                       f"VALUES (?, ?, ?, ?)", (group_id, user_id, False, gift_name))
+        db.commit()
 
 
 ##### УДАЛЕНИЕ ПОДАРКА (ПОЛЬЗОВАТЕЛЬ ОТПРАВЛЯЕТ ЕГО НАЗВАНИЕ) #####
@@ -179,6 +183,31 @@ def new_group(message: Message|CallbackQuery) -> None:
     )
     db.commit()
 
+    my_own_group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE group_name = '{str(owner_id)}'").fetchone()[0]
+    group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{group_password}'").fetchone()[0]
+
+    for_everyone_gifts = [
+        row for row in
+        cursor.execute(
+            f"SELECT is_free, gift_name "
+            f"FROM Gifts "
+            f"WHERE user_id = {owner_id} AND group_id = {my_own_group_id}"
+        ).fetchall()
+    ]
+    for row in for_everyone_gifts:
+        cursor.execute(f"INSERT INTO Gifts (group_id, user_id, is_free, gift_name) "
+                       f"VALUES (?, ?, ?, ?)", (group_id, owner_id, row[0], row[1]))
+        db.commit()
+
+
+##### ПРОВЕРЯЕТ КОРРЕКТНОСТЬ ПАРОЛЯ #####
+def is_password_correct(message: Message|CallbackQuery) -> bool:
+    password = str(message.text)
+    if password in [row[0] for row in cursor.execute("SELECT password FROM Groups").fetchall()]:
+        return True
+    else:
+        return False
+
 
 ##### ПРОЕРЯЕТ, ЕСТЬ ЛИ ПОЛЬЗОАТЕЛЬ В ГРУППЕ #####
 def is_user_in_group(message: Message) -> bool:
@@ -204,10 +233,73 @@ def add_user_in_group(message: Message) -> None:
     )
     db.commit()
 
+    my_own_group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE group_name = '{str(user_id)}'").fetchone()[0]
+    for_everyone_gifts = [
+        row for row in
+        cursor.execute(
+            f"SELECT is_free, gift_name "
+            f"FROM Gifts "
+            f"WHERE user_id = {user_id} AND group_id = {my_own_group_id}"
+        ).fetchall()
+    ]
+    for row in for_everyone_gifts:
+        cursor.execute(f"INSERT INTO Gifts (group_id, user_id, is_free, gift_name) "
+                       f"VALUES (?, ?, ?, ?)", (group_id, user_id, row[0], row[1]))
+        db.commit()
+
 
 ##### ВОЗВРАЩАЕТ ПАРОЛЬ ОТ ГРУППЫ #####
 def give_group_password(message: Message|CallbackQuery) -> str:
     pass
+
+
+##### ВОЗВРАЩАЕТ СЛОВАРЬ ВИДА {'group_name': {'user_name': [gift_name, ....], ....}, ....} #####
+def all_accessible_gifts(message: Message|CallbackQuery):
+    user_id_from_message = int(message.from_user.id)
+    result: dict[int, dict[int, list[int]]] = {}
+
+    accessible_group_ids = [
+        row[0] for row in
+        cursor.execute(
+            f"SELECT group_id "
+            f"FROM Accesses "
+            f"WHERE user_id = {user_id_from_message}"
+        ).fetchall()
+    ]
+
+    for group_id in accessible_group_ids:
+
+        users_in_group = [
+            row[0] for row in
+            cursor.execute(
+                f"SELECT user_id "
+                f"FROM Accesses "
+                f"WHERE group_id = {group_id}"
+            ).fetchall()
+        ]
+
+        if not(group_id in result.keys()):
+            result[group_id] = {}
+
+        for user_id in users_in_group:
+
+            users_gifts = [
+                row[0] for row in
+                cursor.execute(
+                    f"SELECT gift_id FROM Gifts WHERE group_id = {group_id} AND user_id = {user_id}"
+                ).fetchall()
+            ]
+
+            if not(user_id in result[group_id].keys()):
+                result[group_id][user_id] = []
+
+            for gift_id in users_gifts:
+                result[group_id][user_id].append(gift_id)
+
+    return result
+
+# result[group_name][user_name].append(gift)
+
 
 
 

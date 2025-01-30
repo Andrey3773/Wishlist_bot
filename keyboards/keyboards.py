@@ -1,7 +1,7 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 from lexicon.lexicon import KEYBOARD_LEXICON, LEXICON
-from database.interact_database import all_my_gifts
+from database.interact_database import all_my_own_gifts
 
 
 ##### КЛАВИАТУРА С ОДНОЙ КНОПКОЙ "В ГЛАВНОЕ МЕНЮ" #####
@@ -36,7 +36,7 @@ def my_list_keyboard(language: str, message: Message|CallbackQuery) -> InlineKey
         InlineKeyboardButton(text=new_gift[language],
                              callback_data=new_gift['callback'])
     ]
-    if all_my_gifts(message) != LEXICON['no_gifts'][language]:
+    if all_my_own_gifts(message) != LEXICON['no_gifts'][language]:
         buttons.append(
             InlineKeyboardButton(text=delete_gift[language],
                                  callback_data=delete_gift['callback'])

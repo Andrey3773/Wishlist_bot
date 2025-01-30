@@ -12,7 +12,7 @@ from handlers.fsm import FSMCommands, FSMMenu
 from config_data.config import Config, load_config
 from asyncio import sleep
 from keyboards import keyboards as kb
-from filters.filters import IsDeletedIdeaCorrect
+from filters.filters import IsDeletedIdeaCorrect, IsPasswordCorrect
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
@@ -37,7 +37,7 @@ async def main_menu_button(callback: CallbackQuery, state: FSMContext):
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY LIST #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['my_list'])
 async def my_list_button(callback: CallbackQuery):
-    await callback.message.edit_text(text=data.all_my_gifts(callback),
+    await callback.message.edit_text(text=data.all_my_own_gifts(callback),
                                      reply_markup=kb.my_list_keyboard(data.user_language(callback), callback),
                                      parse_mode='HTML')
 
@@ -81,7 +81,7 @@ async def new_gift_button(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == KEYBOARD_LEXICON['delete_gift']['callback'])
 async def delete_gift_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_deleted_idea)
-    await callback.message.edit_text(text=data.all_my_gifts(callback) +
+    await callback.message.edit_text(text=data.all_my_own_gifts(callback) +
                                           '\n\n' +
                                           LEXICON['fill_deleted_gift'][data.user_language(callback)],
                                      reply_markup=kb.main_menu_button(data.user_language(callback)),
@@ -144,7 +144,7 @@ async def take_new_gift_idea(message: Message, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПРИНЯТИЕ ПАРОЛЯ ДЛЯ ГРУППЫ #####
-@router.message(StateFilter(FSMMenu.fill_password), F.text)
+@router.message(StateFilter(FSMMenu.fill_password), IsPasswordCorrect())
 async def take_password_for_group(message: Message, state: FSMContext):
     if not(data.is_user_in_group(message)):
         text = LEXICON['correct_password'][data.user_language(message)]

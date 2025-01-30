@@ -44,6 +44,15 @@ class IsNameCorrect(BaseFilter):
 class IsDeletedIdeaCorrect(BaseFilter):
     async def __call__(self, message: Message):
         if message.text is not None:
-            return message.text in data.all_my_gifts(message)
+            return ('    ' + str(message.text) + '\n    ') in data.all_my_own_gifts(message)
+        else:
+            return False
+
+
+##### ФИЛЬТР, ПРОВЕРЯЮЩЙИ КОРРЕКТНОСТЬ ПАРОЛЯ #####
+class IsPasswordCorrect(BaseFilter):
+    async def __call__(self, message: Message):
+        if message.text is not None:
+            return data.is_password_correct(message)
         else:
             return False
