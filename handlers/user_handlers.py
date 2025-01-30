@@ -105,9 +105,13 @@ async def take_feedback(message: Message, state: FSMContext):
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПРИНЯТИЕ НОВОЙ ИДЕИ ДЛЯ ПОДАРКА #####
 @router.message(StateFilter(FSMMenu.fill_new_idea), F.text)
 async def take_new_gift_idea(message: Message, state: FSMContext):
-    sent_message = await message.answer(text=LEXICON['correct_new_gift_idea'][data.user_language(message)])
-    data.my_own_new_gift(message)
-    await state.clear()
+    if not(data.is_user_has_own_gift(message)):
+        text = LEXICON['correct_new_gift_idea'][data.user_language(message)]
+        data.my_own_new_gift(message)
+        await state.clear()
+    else:
+        text = LEXICON['user_already_has_gift'][data.user_language(message)]
+    sent_message = await message.answer(text=text)
     await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
@@ -127,9 +131,13 @@ async def take_deleted_idea(message: Message, state: FSMContext):
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПРИНЯТИЕ НАЗВАНИЯ НОВОЙ ГРУППЫ #####
 @router.message(StateFilter(FSMMenu.fill_new_group), F.text)
 async def take_new_gift_idea(message: Message, state: FSMContext):
-    sent_message = await message.answer(text=LEXICON['correct_new_group'][data.user_language(message)])
-    data.new_group(message)
-    await state.clear()
+    if not(data.is_user_has_group(message)):
+        text = LEXICON['correct_new_group'][data.user_language(message)]
+        data.new_group(message)
+        await state.clear()
+    else:
+        text = LEXICON['user_already_has_group'][data.user_language(message)]
+    sent_message = await message.answer(text=text)
     await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
@@ -141,10 +149,10 @@ async def take_password_for_group(message: Message, state: FSMContext):
     if not(data.is_user_in_group(message)):
         text = LEXICON['correct_password'][data.user_language(message)]
         data.add_user_in_group(message)
+        await state.clear()
     else:
         text = LEXICON['user_already_in_group'][data.user_language(message)]
     sent_message = await message.answer(text=text)
-    await state.clear()
     await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)

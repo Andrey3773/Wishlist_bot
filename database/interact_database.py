@@ -106,6 +106,19 @@ def all_my_gifts(message: Message|CallbackQuery) -> str:
     return gift_list
 
 
+##### ПРОЕРЯЕТ ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ПОДАРОК С ОБЩИМ ДОСТУПОМ С ТАКИМ ИМЕНЕМ #####
+def is_user_has_own_gift(message: Message|CallbackQuery) -> bool:
+    user_id = message.from_user.id
+    gift_name = str(message.text)
+    my_own_group_id = cursor.execute(f"SELECT group_id FROM Groups WHERE group_name = '{str(user_id)}'").fetchone()[0]
+
+    return gift_name in [row[0] for row in
+                         cursor.execute(
+                             f"SELECT gift_name FROM Gifts "
+                             f"WHERE group_id = {my_own_group_id} AND user_id = {user_id}"
+                         ).fetchall()]
+
+
 ##### ДОБАВЛЯЕТ ПОДАРОК БЕЗ ГРУППЫ (В ОБЩИЙ ДОСТУП) #####
 def my_own_new_gift(message: Message|CallbackQuery) -> None:
     user_id = message.from_user.id
@@ -128,9 +141,23 @@ def delete_my_own_gift(message: Message|CallbackQuery) -> None:
 
 ################################################# РАБОТА С ГРУППАМИ  ##################################################
 
+##### ПРОЕРЯЕТ, ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ГРУППА С ТАКИМ НАЗВАНИЕМ #####
+def is_user_has_group(message: Message|CallbackQuery) -> bool:
+    group_name = str(message.text)
+    user_id = int(message.from_user.id)
+    return group_name in [row[0] for row in cursor.execute(
+        f"SELECT group_name FROM Groups "
+        f"INNER JOIN Accesses "
+        f"ON Groups.group_id = Accesses.group_id "
+        f"WHERE user_id = {user_id}"
+    ).fetchall()]
+
+
 ##### СОЗДАЁТ НОВУЮ ГРУППУ #####
 def new_group(message: Message|CallbackQuery) -> None:
     group_name = str(message.text)
+    owner_id = int(message.from_user.id)
+
     while True:
         group_password = ''.join(
             random.choice(string.ascii_letters + string.digits)
@@ -139,7 +166,6 @@ def new_group(message: Message|CallbackQuery) -> None:
         if not(group_password in [i[0] for i in cursor.execute('SELECT password FROM Groups').fetchall()]):
             break
 
-    owner_id = int(message.from_user.id)
     cursor.execute(
         f"INSERT INTO Groups (group_name, password, owner_id) VALUES (?, ?, ?)",
         (group_name, group_password, owner_id)

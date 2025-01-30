@@ -6,7 +6,7 @@
 from aiogram import Router, Bot
 from aiogram.filters import StateFilter, Command
 from aiogram.types import Message
-from lexicon.lexicon import WRONG_LEXICON, LEXICON
+from lexicon.lexicon import WRONG_LEXICON, LEXICON, LEXICON_COMMAND
 from handlers.fsm import FSMCommands
 from aiogram.fsm.context import FSMContext
 from config_data.config import Config, load_config
@@ -46,7 +46,7 @@ async def incorrect_feedback(message: Message):
 @router.message(Command(commands='help'))
 async def command_help(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(text=LEXICON['help'][data.user_language(message)])
+    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
                          reply_markup=main_menu_keyboard(data.user_language(message)))
 
