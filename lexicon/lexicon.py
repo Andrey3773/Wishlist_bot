@@ -18,7 +18,7 @@ KEYBOARD_LEXICON: dict[str: dict[str: str|list]] = {
             'in_group': 'Вступить в группу',
             'feedback': 'Оставить отзыв'
         },
-        'eng': [],
+        'eng': {},
         'callback': {
             'my_list': 'my_list',
             'my_groups': 'my_groups',
@@ -26,6 +26,9 @@ KEYBOARD_LEXICON: dict[str: dict[str: str|list]] = {
             'in_group': 'in_group',
             'feedback': 'feedback'
         }
+    },
+    'in_group_menu': {
+        'ru': {}
     },
     'new_gift': {
         'ru': 'Новая идея',
@@ -91,6 +94,10 @@ LEXICON: dict[str: dict[str: str|list]] = {
     },
     'no_gifts': {
         'ru': 'У вас пока нет подарков.',
+        'eng': ''
+    },
+    'choose_group': {
+        'ru': '\n\nВыберите группу.',
         'eng': ''
     },
     'fill_feedback': {

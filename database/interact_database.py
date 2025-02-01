@@ -1,9 +1,11 @@
-######################################################################################################################
-####################### ФАЙЛ, В КОТОРОМ ХРАНЯТСЯ ВСЕ ФУНКЦИИ ДЛЯ ВЗАИМОДЕЙСТВИЯ С БАЗОЙ ДАННЫХ #######################
-######################################################################################################################
+########################################################################################################################
+######################## ФАЙЛ, В КОТОРОМ ХРАНЯТСЯ ВСЕ ФУНКЦИИ ДЛЯ ВЗАИМОДЕЙСТВИЯ С БАЗОЙ ДАННЫХ ########################
+########################################################################################################################
 
 
 import sqlite3, string, random
+from distutils.versionpredicate import re_paren
+
 from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON
 
@@ -21,7 +23,7 @@ def get_user_name(user_id: int) -> str:
     return cursor.execute(f"SELECT user_name FROM Users WHERE user_id = {user_id}").fetchone()[0]
 
 
-##### ВОЗВРАЩАЕТ GROUP_NAME ПО ЕГО ID ######
+##### ВОЗВРАЩАЕТ GROUP_NAME ПО ЕE ID ######
 def get_group_name(message: Message|CallbackQuery, group_id: int) -> str:
     user_id = str(message.from_user.id)
     group_name = cursor.execute(f"SELECT group_name FROM Groups WHERE group_id = {group_id}").fetchone()[0]
@@ -36,8 +38,91 @@ def get_gift_name(gift_id: int) -> str:
     return cursor.execute(f"SELECT gift_name FROM Gifts WHERE gift_id = {gift_id}").fetchone()[0]
 
 
+##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ #####
+def users_in_groups(message: Message|CallbackQuery) -> dict:
+    user_id = message.from_user.id
+    all_users = {}
 
-############################################### РАБОТА С ПОЛЬЗОВАТЕЛЯМИ ###############################################
+    for group_id in all_accessible_gifts(message):
+        if group_id not in all_users:
+            all_users[group_id] = []
+        for user_id in all_accessible_gifts(message)[group_id]:
+            all_users[group_id].append(user_id)
+
+    all_users.pop(cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{str(user_id)}'").fetchone()[0])
+
+    return all_users
+
+
+##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОДАРКОВ ПО ПОЛЬЗОВАТЕЛЯМ В ВЫБРАННОЙ ГРУППЕ #####
+def users_gifts(message: Message|CallbackQuery) -> dict:
+    group_id = int(message.data)
+    all_gifts = {}
+
+    for user_id in all_accessible_gifts(message)[group_id]:
+        if user_id not in all_gifts:
+            all_gifts[user_id] = []
+        for gift in all_accessible_gifts(message)[group_id][user_id]:
+            all_gifts[user_id].append(gift)
+
+    return all_gifts
+
+
+
+###################### ПРЕОБРАЗОВАНИЕ СЛОВАРЯ В НУЖНУЮ СТРОКУ (СПИСОК, ОТПРАВЛЯЕМЫЙ ПОЛЬЗОАТЕЛЮ) #######################
+
+##### ВОЗВРАЩАЕТ ВСЕ ПОДАРКИ ПОЛЬЗОВАТЕЛЯ ПО ГРУППАМ #####
+def all_my_own_gifts(message: Message | CallbackQuery) -> str:
+    user_id = int(message.from_user.id)
+    all_gifts = all_accessible_gifts(message)
+
+    gift_list = ''
+
+    for group_id in all_gifts.keys():
+        gift_list += f'<b>{get_group_name(message, group_id)}</b>:\n'
+        for gift_id in all_gifts[group_id][user_id]:
+            gift_list += '    ' + get_gift_name(gift_id) + '\t\n'
+        gift_list += '\t\n'
+
+
+    return gift_list
+
+
+##### ВОЗВРАЩАЕТ ВСЕ ГРУППЫ ПОЛЬЗОВАТЕЛЯ С ИХ СОСТАВАМИ #####
+def all_my_groups(message: Message | CallbackQuery) -> str:
+    all_users = users_in_groups(message)
+    user_list = ''
+
+    for group_id in all_users.keys():
+        user_list += f'<b>{get_group_name(message, group_id)}</b>:\n'
+        for user_id in all_users[group_id]:
+            user_list += f'    {get_user_name(user_id)}\n'
+        user_list += '\n'
+
+    return user_list
+
+
+##### ВОЗВРАЩАЕТ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ВЫБРАННОЙ ГРУППЫ С ИХ ПОДАРКАМИ #####
+def all_users_in_group(message: Message | CallbackQuery) -> str:
+    all_gifts = users_gifts(message, )
+    gift_list = ''
+
+    for user_id in all_gifts.keys():
+        gift_list += f'<b>{get_user_name(user_id)}</b>:\n'
+        for gift_id in all_gifts[user_id]:
+            gift_list += f'    {get_gift_name(gift_id)}\n'
+        gift_list += '\n'
+
+    return gift_list
+
+
+##### ВОЗВРАЩАЕТ ВСЕ ПОДАРКИ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ С ИХ СТАТУСОМ #####
+def all_gifts_grom_user(message: Message | CallbackQuery) -> str:
+    pass
+
+
+
+############################################### РАБОТА С ПОЛЬЗОВАТЕЛЯМИ ################################################
 
 ##### ПРОВЕРЯЕТ ЗАРЕГЕСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
 def user_in_data(message: Message|CallbackQuery) -> bool:
@@ -86,22 +171,6 @@ def new_feedback(message: Message|CallbackQuery) -> None:
 
 
 ################################################# РАБОТА С ПОДАРКАМИ ##################################################
-
-##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'group_name_1:\n gift_name_1\n gift_name_2\n\n group_name_1:.... #####
-def all_my_own_gifts(message: Message | CallbackQuery) -> str:
-    user_id = int(message.from_user.id)
-    all_gifts = all_accessible_gifts(message)
-
-    gift_list = ''
-
-    for group_id in all_gifts.keys():
-        gift_list += f'<b>{get_group_name(message, group_id)}</b>:\n'
-        for gift_id in all_gifts[group_id][user_id]:
-            gift_list += '    ' + get_gift_name(gift_id) + '\n'
-        gift_list += '\n'
-
-
-    return gift_list
 
 
 ##### ПРОЕРЯЕТ ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ПОДАРОК С ОБЩИМ ДОСТУПОМ С ТАКИМ ИМЕНЕМ #####
@@ -253,7 +322,7 @@ def give_group_password(message: Message|CallbackQuery) -> str:
     pass
 
 
-##### ВОЗВРАЩАЕТ СЛОВАРЬ ВИДА {'group_name': {'user_name': [gift_name, ....], ....}, ....} #####
+##### ВОЗВРАЩАЕТ СЛОВАРЬ ВИДА {'group_id': {'user_id': [gift_id, ....], ....}, ....} #####
 def all_accessible_gifts(message: Message|CallbackQuery):
     user_id_from_message = int(message.from_user.id)
     result: dict[int, dict[int, list[int]]] = {}
@@ -295,11 +364,7 @@ def all_accessible_gifts(message: Message|CallbackQuery):
 
             for gift_id in users_gifts:
                 result[group_id][user_id].append(gift_id)
-
     return result
-
-# result[group_name][user_name].append(gift)
-
 
 
 

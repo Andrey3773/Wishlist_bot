@@ -4,7 +4,7 @@
 
 
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from database import interact_database as data
 from emoji import demojize
 
@@ -44,15 +44,23 @@ class IsNameCorrect(BaseFilter):
 class IsDeletedIdeaCorrect(BaseFilter):
     async def __call__(self, message: Message):
         if message.text is not None:
-            return ('    ' + str(message.text) + '\n    ') in data.all_my_own_gifts(message)
+            return '    ' + str(message.text) + '\t\n' in data.all_my_own_gifts(message)
         else:
             return False
-
 
 ##### ФИЛЬТР, ПРОВЕРЯЮЩЙИ КОРРЕКТНОСТЬ ПАРОЛЯ #####
 class IsPasswordCorrect(BaseFilter):
     async def __call__(self, message: Message):
         if message.text is not None:
             return data.is_password_correct(message)
+        else:
+            return False
+
+
+##### ФИЛЬТР, ОТЛАВЛИВАЮЩИЙ НАЖАТИЕ КНОПОК С НАЗВАНИЯМИ ГРУПП #####
+class GroupButtons(BaseFilter):
+    async def __call__(self, callback: CallbackQuery):
+        if callback.data is not None:
+            return callback.data in [str(i) for i in data.users_in_groups(callback).keys()]
         else:
             return False

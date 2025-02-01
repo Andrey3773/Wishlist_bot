@@ -49,7 +49,7 @@ async def command_help(message: Message, state: FSMContext):
     data.all_accessible_gifts(message)
     await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(data.user_language(message)))
+                         reply_markup=main_menu_keyboard(message))
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВСЕ НЕПРЕДУСМОТРЕННЫЕ ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ #####
