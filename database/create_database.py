@@ -4,6 +4,7 @@ import sqlite3
 ##### СОЕДИНЕНИЕ С ФАЙЛОМ, В КОТОРОМ НАХОДИТСЯ БАЗА ДАННЫХ #####
 db = sqlite3.connect('database.sqlite')
 cursor = db.cursor()
+cursor.execute('PRAGMA foreign_keys = ON')
 
 
 ##### СОЗДАНИЕ БАЗЫ ДАННЫХ #####
@@ -11,58 +12,69 @@ cursor = db.cursor()
 def create_database():
     # Пользователи
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Users (
-        user_id INTEGER,
-        user_name TEXT,
-        language TEXT
-    )
+        CREATE TABLE IF NOT EXISTS Users (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT,
+            language TEXT
+        )
     ''')
 
     # Подарки
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Gifts (
-        gift_id INTEGER PRIMARY KEY,
-        group_id INTEGER,
-        user_id INTEGER,
-        is_free BOOL,
-        gift_name TEXT
-    )
+        CREATE TABLE IF NOT EXISTS Gifts (
+            gift_id INTEGER PRIMARY KEY,
+            user_id INTEGER,
+            giver_id INTEGER DEFAULT None,
+            gift_name TEXT
+        )
     ''')
 
     # Группы
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Groups (
-        group_id INTEGER PRIMARY KEY,
-        group_name TEXT,
-        password TEXT,
-        owner_id INTEGER
-    )
+        CREATE TABLE IF NOT EXISTS Groups (
+            group_id INTEGER PRIMARY KEY,
+            group_name TEXT,
+            password TEXT,
+            owner_id INTEGER
+        )
     ''')
 
     # Составы групп
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Accesses (
-        access_id INTEGER PRIMARY KEY,
-        group_id INTEGER,
-        user_id INTEGER
-    )
+        CREATE TABLE IF NOT EXISTS Group_User (
+            group_id INTEGER,
+            user_id INTEGER,
+            FOREIGN KEY (group_id) REFERENCES Groups(group_id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Подарки в группах
+    # Составы групп
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Group_Gift (
+            group_id INTEGER,
+            gift_id INTEGER,
+            FOREIGN KEY (group_id) REFERENCES Groups(group_id) ON DELETE CASCADE,
+            FOREIGN KEY (gift_id) REFERENCES Gifts(gift_id) ON DELETE CASCADE
+        )
     ''')
 
     # Отзывы
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Feedback (
-        feedback_id INTEGER PRIMARY KEY,
-        feedback_text TEXT
-    )
+        CREATE TABLE IF NOT EXISTS Feedback (
+            feedback_id INTEGER PRIMARY KEY,
+            feedback_text TEXT
+        )
     ''')
 
     # Проблемы
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Troubles (
-        trouble_id INTEGER PRIMARY KEY,
-        trouble_text TEXT,
-        solved BOOL
-    )
+        CREATE TABLE IF NOT EXISTS Troubles (
+            trouble_id INTEGER PRIMARY KEY,
+            trouble_text TEXT,
+            solved BOOL DEFAULT False
+        )
     ''')
 
     db.commit()

@@ -57,4 +57,4 @@ async def correct_registration(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(data.user_language(message)))
+                         reply_markup=main_menu_keyboard(message))

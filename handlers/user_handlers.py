@@ -164,12 +164,14 @@ async def take_new_gift_idea(message: Message, state: FSMContext):
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПРИНЯТИЕ ПАРОЛЯ ДЛЯ ГРУППЫ #####
 @router.message(StateFilter(FSMMenu.fill_password), IsPasswordCorrect())
 async def take_password_for_group(message: Message, state: FSMContext):
-    if not(data.is_user_in_group(message)):
+    if data.is_user_in_group(message):
+        text = LEXICON['user_already_in_group'][data.user_language(message)]
+    elif data.is_user_has_same_group(message):
+        text = LEXICON['user_already_has_same_group'][data.user_language(message)]
+    else:
         text = LEXICON['correct_password'][data.user_language(message)]
         data.add_user_in_group(message)
         await state.clear()
-    else:
-        text = LEXICON['user_already_in_group'][data.user_language(message)]
     sent_message = await message.answer(text=text)
     await sleep(5)
     await message.delete()
