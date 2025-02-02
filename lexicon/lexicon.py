@@ -90,6 +90,13 @@ KEYBOARD_LEXICON: dict[str: dict[str: dict[str: str]]] = {
             'callback': 'kill_issue'
         },
     },
+    'group_password': {
+        'get_password': {
+            'ru': 'Пароль',
+            'eng': '',
+            'callback': 'get_password'
+        },
+    },
 }
 
 
@@ -154,6 +161,14 @@ LEXICON: dict[str: dict[str: str|list]] = {
         'ru': '\nВыберите группу.',
         'eng': ''
     },
+    'choose_user': {
+        'ru': '\nВыберите пользователя.',
+        'eng': ''
+    },
+    'choose_gift': {
+        'ru': '\nВыберите подарок.',
+        'eng': ''
+    },
     'fill_feedback': {
         'ru': 'Здесь вы можете передать обратную связь.\n'
               'Напишите о своих впечатлениях или обнаруженной проблеме в текстовом сообщении, '
@@ -178,7 +193,15 @@ LEXICON: dict[str: dict[str: str|list]] = {
     'fill_password': {
         'ru': 'Попросите у владельца группы пароль для доступа к ней и пришлите мне его текстовым сообщением.',
         'eng': ''
-    }
+    },
+    'you_giver': {
+        'ru': '✅',
+        'eng': '✅'
+    },
+    'not_free_gift': {
+        'ru': '❌',
+        'eng': '❌'
+    },
 }
 
 

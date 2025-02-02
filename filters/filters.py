@@ -55,12 +55,3 @@ class IsPasswordCorrect(BaseFilter):
             return data.is_password_correct(message)
         else:
             return False
-
-
-##### ФИЛЬТР, ОТЛАВЛИВАЮЩИЙ НАЖАТИЕ КНОПОК С НАЗВАНИЯМИ ГРУПП #####
-class GroupButtons(BaseFilter):
-    async def __call__(self, callback: CallbackQuery):
-        if callback.data is not None:
-            return callback.data in [str(i) for i in data.users_in_groups(callback).keys()]
-        else:
-            return False

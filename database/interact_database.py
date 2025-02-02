@@ -4,8 +4,6 @@
 
 
 import sqlite3, string, random
-from lib2to3.fixes.fix_metaclass import fixup_simple_stmt
-
 from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON, LEXICON_ADMIN
 
@@ -56,7 +54,7 @@ def users_in_groups(message: Message|CallbackQuery) -> dict:
 
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОДАРКОВ ПО ПОЛЬЗОВАТЕЛЯМ В ВЫБРАННОЙ ГРУППЕ #####
-def users_gifts(message: Message|CallbackQuery) -> dict:
+def users_gifts_in_group(message: Message | CallbackQuery) -> dict:
     group_id = int(message.data)
     all_gifts = {}
 
@@ -67,6 +65,18 @@ def users_gifts(message: Message|CallbackQuery) -> dict:
             all_gifts[user_id].append(gift)
 
     return all_gifts
+
+
+##### ВОЗВРАЩАЕТ СПИСОК ПОДАРКОВ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ В ВЫБРАННОЙ ГРУППЕ #####
+def users_gifts(message: Message|CallbackQuery) -> list:
+    group_id = int(message.data[:message.data.index('_')])
+    user_id = int(message.data[message.data.index('_') + 1:])
+    gifts = []
+
+    for gift_id in all_accessible_gifts(message)[group_id][user_id]:
+        gifts.append(gift_id)
+
+    return gifts
 
 
 
@@ -106,8 +116,9 @@ def all_my_groups(message: Message | CallbackQuery) -> str:
 
 ##### ВОЗВРАЩАЕТ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ВЫБРАННОЙ ГРУППЫ С ИХ ПОДАРКАМИ #####
 def all_users_in_group(message: Message | CallbackQuery) -> str:
-    all_gifts = users_gifts(message, )
-    gift_list = ''
+    all_gifts = users_gifts_in_group(message)
+    group_id = int(message.data)
+    gift_list = f"<u><b>{get_group_name(message, group_id).upper()}</b></u>\n\n"
 
     for user_id in all_gifts.keys():
         gift_list += f'<b>{get_user_name(user_id)}</b>:\n'
@@ -118,9 +129,33 @@ def all_users_in_group(message: Message | CallbackQuery) -> str:
     return gift_list
 
 
-##### ВОЗВРАЩАЕТ ВСЕ ПОДАРКИ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ С ИХ СТАТУСОМ #####
-def all_gifts_grom_user(message: Message | CallbackQuery) -> str:
-    pass
+##### ВОЗВРАЩАЕТ СПИСОК ПОДАРКОВ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ В ВЫБРАННОЙ ГРУППЕ С ИХ СТАТУСОМ #####
+def all_gifts_by_user_in_group(message: Message|CallbackQuery, status=False) -> str:
+    user_id = int(message.data[message.data.index('_') + 1:])
+    all_gifts = users_gifts(message)
+    gifts = f"<u><b>{get_user_name(user_id).upper()}</b></u>" + '\n\n'
+    is_free = '  '
+
+    if status:
+        for gift in all_gifts:
+            if cursor.execute(f"SELECT giver_id "
+                              f"FROM Gifts "
+                              f"WHERE gift_id = {gift}").fetchone()[0] == message.from_user.id:
+                is_free = LEXICON['you_giver'][user_language(message)]
+            elif cursor.execute(f"SELECT giver_id "
+                              f"FROM Gifts "
+                              f"WHERE gift_id = {gift}").fetchone()[0] != 0:
+                is_free = LEXICON['not_free_gift'][user_language(message)]
+            else:
+                is_free = '     '
+
+            gifts += f"{is_free}{get_gift_name(gift)}\n"
+    else:
+        for gift in all_gifts:
+            gifts += f"{get_gift_name(gift)}\n"
+
+
+    return gifts
 
 
 
@@ -332,8 +367,10 @@ def add_user_in_group(message: Message) -> None:
 
 
 ##### ВОЗВРАЩАЕТ ПАРОЛЬ ОТ ГРУППЫ #####
-def give_group_password(message: Message|CallbackQuery) -> str:
-    pass
+def get_password(message: Message|CallbackQuery) -> str:
+    group_id = message.data[:message.data.index('_')]
+    password = cursor.execute(f"SELECT password FROM Groups WHERE group_id = {group_id}").fetchone()[0]
+    return f"<code>{password}</code>"
 
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ВИДА {'group_id': {'user_id': [gift_id, ....], ....}, ....} #####

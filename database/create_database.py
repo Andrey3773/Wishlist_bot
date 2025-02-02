@@ -24,7 +24,7 @@ def create_database():
         CREATE TABLE IF NOT EXISTS Gifts (
             gift_id INTEGER PRIMARY KEY,
             user_id INTEGER,
-            giver_id INTEGER DEFAULT None,
+            giver_id INTEGER DEFAULT 0,
             gift_name TEXT
         )
     ''')

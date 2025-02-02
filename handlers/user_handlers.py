@@ -8,11 +8,11 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from lexicon.lexicon import LEXICON, KEYBOARD_LEXICON
 from database import interact_database as data
-from handlers.fsm import FSMCommands, FSMMenu
+from handlers.fsm import FSMCommands, FSMMenu, FSMMyGroup
 from config_data.config import Config, load_config
 from asyncio import sleep
 from keyboards import keyboards as kb
-from filters.filters import IsDeletedIdeaCorrect, IsPasswordCorrect, GroupButtons
+from filters.filters import IsDeletedIdeaCorrect, IsPasswordCorrect
 
 
 ##### ИНИЦИАЛИЗАЦИЯ РОУТЕРА #####
@@ -44,8 +44,9 @@ async def my_list_button(callback: CallbackQuery):
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY GROUPS #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['my_groups']['callback'])
-async def my_groups_button(callback: CallbackQuery):
+async def my_groups_button(callback: CallbackQuery, state: FSMContext):
     data.all_my_groups(callback)
+    await state.set_state(FSMMyGroup.fill_group)
     await callback.message.edit_text(text=data.all_my_groups(callback) +
                                           LEXICON['choose_group'][data.user_language(callback)],
                                      reply_markup=kb.my_groups_keyboard(callback),
@@ -87,23 +88,60 @@ async def new_gift_button(callback: CallbackQuery, state: FSMContext):
                                      reply_markup=kb.main_menu_button(callback))
 
 
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ DELETE GIFT #####
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ DELETE GIFT В МОЕМ ВИШЛИСТЕ #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['in_my_list']['delete_gift']['callback'])
 async def delete_gift_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_deleted_idea)
     await callback.message.edit_text(text=data.all_my_own_gifts(callback) +
-                                          '\n\n' +
-                                          LEXICON['fill_deleted_gift'][data.user_language(callback)],
-                                     reply_markup=kb.main_menu_button(callback),
-                                     parse_mode='HTML')
+                                      '\n\n' +
+                                      LEXICON['fill_deleted_gift'][data.user_language(callback)],
+                                 reply_markup=kb.main_menu_button(callback),
+                                 parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ С НАЗВАНИЕМ ГРУППЫ #####
-@router.callback_query(F.data, GroupButtons())
-async def group_button(callback: CallbackQuery):
-    await callback.message.edit_text(text=data.all_users_in_group(callback),
+@router.callback_query(F.data.isdigit(), StateFilter(FSMMyGroup.fill_group))
+async def group_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMMyGroup.fill_user)
+    await callback.message.edit_text(text=data.all_users_in_group(callback) +
+                                     LEXICON['choose_user'][data.user_language(callback)],
+                                     reply_markup=kb.users_in_group_keyboard(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ С ИМЕНЕНЕМ ПОЛЬЗОВАТЕЛЯ #####
+@router.callback_query(F.data.replace('_', '').isdigit(), StateFilter(FSMMyGroup.fill_user))
+async def user_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMMyGroup.fill_gift)
+    if callback.data[callback.data.find('_') + 1:] == str(callback.from_user.id):
+        await callback.message.edit_text(text=data.all_gifts_by_user_in_group(callback) +
+                                              LEXICON['choose_gift'][data.user_language(callback)],
+                                         reply_markup=kb.gifts_by_user_keyboard(callback),
+                                         parse_mode='HTML')
+    else:
+        await callback.message.edit_text(text=data.all_gifts_by_user_in_group(callback, status=True) +
+                                         LEXICON['choose_gift'][data.user_language(callback)],
+                                         reply_markup=kb.gifts_by_user_keyboard(callback),
+                                         parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КНОПКУ ПАРОЛЬ #####
+@router.callback_query(F.data[-len(KEYBOARD_LEXICON['group_password']['get_password']['callback']):] ==
+                       KEYBOARD_LEXICON['group_password']['get_password']['callback'])
+async def get_password_button(callback: CallbackQuery):
+    await callback.message.edit_text(text=data.get_password(callback),
                                      reply_markup=kb.main_menu_button(callback),
                                      parse_mode='HTML')
+
+
+#TODO#### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ С НАЗВАНИЕМ ПОДАРКА #####
+@router.callback_query(F.replace('_', '').data.isdigit(), StateFilter(FSMMyGroup.fill_gift))
+async def gift_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMMyGroup.what_do_with_gift)
+    if callback.data[callback.data.find('_') + 1:callback.data.rfind('_')] == str(callback.from_user.id):
+        pass
+    else:
+        pass
 
 
 

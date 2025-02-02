@@ -30,3 +30,12 @@ class FSMAdmin(StatesGroup):
     fill_solved_issue = State()
     fill_unsolved_issue = State()
     fill_killed_issue = State()
+
+
+##### МАШИНА СОСТОЯНИЙ ДЛЯ НАХОЖДЕНИЯ В СПИСКЕ МОИХ ГРУПП #####
+class FSMMyGroup(StatesGroup):
+    fill_group = State()
+    fill_user = State()
+    fill_gift = State()
+    what_do_with_gift = State()
+    fill_new_gift = State()
