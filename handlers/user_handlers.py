@@ -27,7 +27,7 @@ bot = Bot(token=config.bot.token)
 ############################################ ОБРАБОТКА КНОПОК ГЛАВНОГО МЕНЮ ############################################
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ НАЖАТИЯ КНОПКИ MAIN MENU #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu_button']['callback'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
 async def main_menu_button(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(text=LEXICON['main_menu'][data.user_language(callback)],
@@ -35,7 +35,7 @@ async def main_menu_button(callback: CallbackQuery, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY LIST #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['my_list'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['my_list']['callback'])
 async def my_list_button(callback: CallbackQuery):
     await callback.message.edit_text(text=data.all_my_own_gifts(callback),
                                      reply_markup=kb.my_list_keyboard(callback),
@@ -43,7 +43,7 @@ async def my_list_button(callback: CallbackQuery):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY GROUPS #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['my_groups'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['my_groups']['callback'])
 async def my_groups_button(callback: CallbackQuery):
     data.all_my_groups(callback)
     await callback.message.edit_text(text=data.all_my_groups(callback) +
@@ -53,7 +53,7 @@ async def my_groups_button(callback: CallbackQuery):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ NEW GROUP #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['new_group'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['new_group']['callback'])
 async def new_group_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_new_group)
     await callback.message.edit_text(text=LEXICON['fill_group_name'][data.user_language(callback)],
@@ -61,7 +61,7 @@ async def new_group_button(callback: CallbackQuery, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ IN GROUP #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['in_group'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['in_group']['callback'])
 async def in_group_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_password)
     await callback.message.edit_text(text=LEXICON['fill_password'][data.user_language(callback)],
@@ -69,7 +69,7 @@ async def in_group_button(callback: CallbackQuery, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ FEEDBACK #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['callback']['feedback'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['feedback']['callback'])
 async def feedback_button(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=LEXICON['fill_feedback'][data.user_language(callback)],
         reply_markup=kb.main_menu_button(callback))
@@ -80,7 +80,7 @@ async def feedback_button(callback: CallbackQuery, state: FSMContext):
 ######################################### ОБРАБОТКА КНОПОК МЕНЮ НИЖНИХ УРОВНЕЙ #########################################
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ NEW GIFT IN MY LIST #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['new_gift']['callback'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['in_my_list']['new_gift']['callback'])
 async def new_gift_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_new_idea)
     await callback.message.edit_text(text=LEXICON['fill_new_gift'][data.user_language(callback)],
@@ -88,7 +88,7 @@ async def new_gift_button(callback: CallbackQuery, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ DELETE GIFT #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['delete_gift']['callback'])
+@router.callback_query(F.data == KEYBOARD_LEXICON['in_my_list']['delete_gift']['callback'])
 async def delete_gift_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMMenu.fill_deleted_idea)
     await callback.message.edit_text(text=data.all_my_own_gifts(callback) +

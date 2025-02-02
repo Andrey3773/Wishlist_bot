@@ -4,42 +4,92 @@
 
 
 ##### ТЕКСТ НА КНОПКАХ КЛАВИАТУР #####
-KEYBOARD_LEXICON: dict[str: dict[str: str|list]] = {
-    'main_menu_button': {
-        'ru': 'В главное меню',
-        'eng': '',
-        'callback': 'main_menu_button'
-    },
+KEYBOARD_LEXICON: dict[str: dict[str: dict[str: str]]] = {
     'main_menu': {
-        'ru': {
-            'my_list': 'Мой вишлист',
-            'my_groups': 'Мои группы',
-            'new_group': 'Создать группу',
-            'in_group': 'Вступить в группу',
-            'feedback': 'Оставить отзыв'
+        'my_list': {
+            'ru': 'Мой вишлист',
+            'eng': '',
+            'callback': 'my_list',
         },
-        'eng': {},
-        'callback': {
-            'my_list': 'my_list',
-            'my_groups': 'my_groups',
-            'new_group': 'new_group',
-            'in_group': 'in_group',
-            'feedback': 'feedback'
+        'my_groups': {
+            'ru': 'Мои группы',
+            'eng': '',
+            'callback': 'my_groups',
+        },
+        'new_group': {
+            'ru': 'Создать группу',
+            'eng': '',
+            'callback': 'new_group',
+        },
+        'in_group': {
+            'ru': 'Вступить в группу',
+            'eng': '',
+            'callback': 'in_group',
+        },
+        'feedback': {
+            'ru': 'Оставить отзыв',
+            'eng': '',
+            'callback': 'feedback',
+        },
+        'main_menu_button': {
+            'ru': 'В главное меню',
+            'eng': '',
+            'callback': 'main_menu_button',
+        },
+    },
+    'in_my_list': {
+        'new_gift': {
+            'ru': 'Новая идея',
+            'eng': '',
+            'callback': 'new_gift'
+        },
+        'delete_gift': {
+            'ru': 'Удалить идею',
+            'eng': '',
+            'callback': 'kill_gift'
+        },
+    },
+    'admin': {
+        'kill_feedback': {
+            'ru': 'Удалить отзыв😈',
+            'eng': '',
+            'callback': 'kill_feedback'
+        },
+        'make_issue': {
+            'ru': 'Сделать багом☠️',
+            'eng': '',
+            'callback': 'make_issue'
+        },
+        'see_issues': {
+            'ru': 'Посмотреть проблемы',
+            'eng': '',
+            'callback': 'see_issues'
+        },
+    },
+    'admin_lower': {
+        'back': {
+            'ru': 'Назад',
+            'eng': '',
+            'callback': 'back'
         }
     },
-    'in_group_menu': {
-        'ru': {}
+    'admin_in_issues': {
+        'solve_issue': {
+            'ru': 'Закрыть',
+            'eng': '',
+            'callback': 'solve_issue'
+        },
+        'not_solve_issue': {
+            'ru': 'Открыть',
+            'eng': '',
+            'callback': 'not_solve_issue'
+        },
+        'kill_issue': {
+            'ru': 'Удалить',
+            'eng': '',
+            'callback': 'kill_issue'
+        },
     },
-    'new_gift': {
-        'ru': 'Новая идея',
-        'eng': '',
-        'callback': 'new_gift'
-    },
-    'delete_gift': {
-        'ru': 'Удалить идею',
-        'eng': '',
-        'callback': 'kill_gift'
-    }
 }
 
 
@@ -169,13 +219,57 @@ LEXICON_ADMIN: dict[str: dict[str: str|list]] = {
         'ru': 'Это help для администраторов',
         'eng': ''
     },
-    'clothed_trouble': {
+    'no_issue': {
+        'ru': 'Пока живем без проблем🤞',
+        'eng': ''
+    },
+    'no_feedback': {
+        'ru': 'Никто так и не соизволил оставить хоть какой-то отзыв😭😭😭',
+        'eng': ''
+    },
+    'clothed_issue': {
         'ru': '✅',
         'eng': '✅'
     },
-    'trouble': {
+    'issue': {
         'ru': '❌',
         'eng': '❌'
+    },
+    'fill_kill_feedback': {
+        'ru': '\nВведи цифру отзыва, который надо удалить',
+        'eng': ''
+    },
+    'fill_make_issue': {
+        'ru': '\nВведи цифру отзыва, который надо удалить',
+        'eng': ''
+    },
+    'fill_see_issue': {
+        'ru': '\nВведи цифру отзыва, который хочешь сделать своей проблемой😒',
+        'eng': ''
+    },
+    'kill_feedback': {
+        'ru': '\nКайфарики, отзыв удален💪',
+        'eng': ''
+    },
+    'make_issue': {
+        'ru': 'Теперь в твоей жизни на одну проблему больше🫠',
+        'eng': ''
+    },
+    'solve_issue': {
+        'ru': 'Теперь в твоей жизни на одну проблему меньше\n😎🎉🎉',
+        'eng': ''
+    },
+    'choose_issue': {
+        'ru': '\n\nНу выбирай...',
+        'eng': ''
+    },
+    'kill_issue': {
+        'ru': '\n\nПравильно, туда её!🖕',
+        'eng': ''
+    },
+    'issues': {
+        'ru': 'Вот твои проблемы:\n\n',
+        'eng': ''
     }
 }
 

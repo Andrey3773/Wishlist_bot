@@ -4,8 +4,10 @@
 
 
 import sqlite3, string, random
+from lib2to3.fixes.fix_metaclass import fixup_simple_stmt
+
 from aiogram.types import Message, CallbackQuery
-from lexicon.lexicon import LEXICON
+from lexicon.lexicon import LEXICON, LEXICON_ADMIN
 
 
 ##### СОЕДИНЕНИЕ С ФАЙЛОМ, В КОТОРОМ НАХОДИТСЯ БАЗА ДАННЫХ #####
@@ -386,6 +388,32 @@ def all_accessible_gifts(message: Message|CallbackQuery):
 
 ################################################## РАБОТА С ОТЗЫВАМИ ##################################################
 
+##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'feedback_id. feedback_text \n\n ....' СО ВСЕМИ ОТЗЫВАМИ #####
+def all_feedback(message: Message|CallbackQuery) -> str:
+    feedback = ''
+    if len(cursor.execute('SELECT * FROM Feedback').fetchall()) > 0:
+        for row in cursor.execute('SELECT * FROM Feedback'):
+            feedback += str(row[0]) + '. ' + row[1] + '\n\n'
+    else:
+        feedback = LEXICON_ADMIN['no_feedback'][user_language(message)]
+    return feedback
+
+
+##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'issue_id. issue_text \n\n ....' СО ВСЕМИ ПРОБЛЕМАМИ #####
+def all_issues(message: Message|CallbackQuery) -> str:
+    issues = ''
+    if len(cursor.execute('SELECT * FROM Issues').fetchall()) > 0:
+        for row in cursor.execute('SELECT * FROM Issues').fetchall():
+            if row[2]:
+                issues += LEXICON_ADMIN['clothed_issue'][user_language(message)]
+            else:
+                issues += LEXICON_ADMIN['issue'][user_language(message)]
+            issues += str(row[0]) + '. ' + row[1] + '\n\n'
+    else:
+        issues = LEXICON_ADMIN['no_issue'][user_language(message)]
+    return issues
+
+
 ##### ЗАНЕСЕНИЕ НОВОГО ОТЗЫВА В БАЗУ ДАННЫХ #####
 def new_feedback(message: Message|CallbackQuery) -> None:
     text = str(message.text)
@@ -393,24 +421,52 @@ def new_feedback(message: Message|CallbackQuery) -> None:
     db.commit()
 
 
-##### ИСПРАВЛЕНИЕ ОШИБКИ, ОБНАРУЖЕННОЙ ПОЛЬЗОВАТЕЛЕМ #####
-def trouble_solved(message: Message|CallbackQuery) -> None:
-    trouble_id = int(message.text)
-    cursor.execute(f'UPDATE Troubles SET solved = True WHERE trouble_id = {trouble_id}')
+##### ИСПРАВЛЕНИЕ ПРОБЛЕМЫ, ОБНАРУЖЕННОЙ ПОЛЬЗОВАТЕЛЕМ #####
+def solve_issue(callback: Message|CallbackQuery) -> None:
+    trouble_id = int(callback.data)
+    cursor.execute(f'UPDATE Issues SET solved = True WHERE issue_id = {trouble_id}')
     db.commit()
 
 
-##### ВОЗВРАЩАЕТ СТРОКУ ВИДА 'feedback_id. feedback_text \n\n ....' СО ВСЕМИ ОТЗЫВАМИ #####
-def all_feedback() -> str:
-    feedback = ''
-    if len(cursor.execute('SELECT * FROM Feedback').fetchall()) > 0:
-        for row in cursor.execute('SELECT * FROM Feedback'):
-            feedback += str(row[0]) + '. ' + row[1] + '\n\n'
-    else:
-        feedback = 'Отзывов пока нет'
-    return feedback
+##### ДЕЛАЕТ ПРОБЛЕМУ СНОВА АКТУАЛЬНОЙ #####
+def not_solve_issue(callback: Message|CallbackQuery) -> None:
+    trouble_id = int(callback.data)
+    cursor.execute(f'UPDATE Issues SET solved = False WHERE issue_id = {trouble_id}')
+    db.commit()
 
 
 ##### ПЕРЕНОСИТ ОТЗЫВ ИЗ ТАБЛИЦЫ С ОТЗЫВАМИ В ТАБЛИЦУ С ПРОБЛЕМАМИ И ПРИСВАИВАЕТ ЕЙ СТАТУС НЕРЕШЕННОЙ #####
-def new_trouble(trouble_id: int) -> None:
-    pass
+def new_issue(callback: Message|CallbackQuery) -> None:
+    feedback_id = int(callback.data)
+    feedback_text = cursor.execute(f"SELECT feedback_text "
+                                   f"FROM Feedback "
+                                   f"WHERE feedback_id = {feedback_id}").fetchone()[0]
+
+    cursor.execute(f"INSERT INTO Issues (issue_text) VALUES ('{feedback_text}')")
+    db.commit()
+    cursor.execute(f"DELETE FROM Feedback WHERE feedback_id = {feedback_id}")
+    db.commit()
+
+
+##### УДАЛЯЕТ ОТЗЫВ ПО ЕГО ID #####
+def kill_feedback(callback: Message|CallbackQuery):
+    feedback_id = int(callback.data)
+    cursor.execute(f"DELETE FROM Feedback WHERE feedback_id = {feedback_id}")
+    db.commit()
+
+
+##### УДАЛЯЕТ ПРОБЛЕМУ ПО ЕЕ ID #####
+def kill_issue(callback: Message|CallbackQuery):
+    feedback_id = int(callback.data)
+    cursor.execute(f"DELETE FROM Issues WHERE issue_id = {feedback_id}")
+    db.commit()
+
+
+##### ВОЗВРАЩАЕТ СПИСОК ID ОТЗЫВОВ #####
+def feedback_list() -> list:
+    return [row[0] for row in cursor.execute("SELECT feedback_id FROM Feedback").fetchall()]
+
+
+##### ВОЗВРАЩАЕТ СПИСОК ID ПРОБЛЕМ #####
+def issue_list() -> list:
+    return [row[0] for row in cursor.execute("SELECT issue_id FROM Issues").fetchall()]

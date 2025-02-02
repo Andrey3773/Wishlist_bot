@@ -21,3 +21,12 @@ class FSMMenu(StatesGroup):
     fill_deleted_idea = State()
     fill_new_group = State()
     fill_password = State()
+
+
+##### МАШИНА СОСТОЯНИЙ ДЛЯ АДМИНОВ #####
+class FSMAdmin(StatesGroup):
+    fill_kill_feedback = State()
+    fill_new_issue = State()
+    fill_solved_issue = State()
+    fill_unsolved_issue = State()
+    fill_killed_issue = State()

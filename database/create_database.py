@@ -70,9 +70,9 @@ def create_database():
 
     # Проблемы
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Troubles (
-            trouble_id INTEGER PRIMARY KEY,
-            trouble_text TEXT,
+        CREATE TABLE IF NOT EXISTS Issues (
+            issue_id INTEGER PRIMARY KEY,
+            issue_text TEXT,
             solved BOOL DEFAULT False
         )
     ''')
