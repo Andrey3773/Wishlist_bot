@@ -90,12 +90,13 @@ def users_in_group_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMar
     buttons = []
 
     for i in all_users:
-        buttons.append(
-            InlineKeyboardButton(
-                text=data.get_user_name(i),
-                callback_data=message.data + '_' + str(i)
+        if i != message.from_user.id:
+            buttons.append(
+                InlineKeyboardButton(
+                    text=data.get_user_name(i),
+                    callback_data=message.data + '_' + str(i)
+                )
             )
-        )
     service_buttons = [
         InlineKeyboardButton(text=KEYBOARD_LEXICON['group_password']['get_password'][language],
                              callback_data=message.data + '_' +
@@ -131,6 +132,42 @@ def gifts_by_user_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMark
 
     kb_builder.row(*buttons, width=3)
     kb_builder.row(*service_buttons, width=2)
+
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
+##### КЛАВИАТУРА ПОД КАРТОЧКОЙ ПОДАРКА #####
+def under_gift_keyboard(callback: Message|CallbackQuery) -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+
+    gift_id = int(callback.data[callback.data.rfind('_') + 1:])
+    giver_id = data.get_giver_id(gift_id)
+    language = data.user_language(callback)
+
+    if giver_id == callback.from_user.id:
+        buttons = [
+            InlineKeyboardButton(
+                text=KEYBOARD_LEXICON['under_gift']['free_up_gift'][language],
+                callback_data=str(gift_id) + '_' + KEYBOARD_LEXICON['under_gift']['free_up_gift']['callback']
+            )
+        ]
+    elif giver_id == 0:
+        buttons = [
+            InlineKeyboardButton(
+                text=KEYBOARD_LEXICON['under_gift']['take_gift'][language],
+                callback_data=str(gift_id) + '_' + KEYBOARD_LEXICON['under_gift']['take_gift']['callback']
+            )
+        ]
+    else:
+        buttons = []
+
+    service_buttons = [
+        InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
+                             callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
+    ]
+
+    kb_builder.row(*buttons)
+    kb_builder.row(*service_buttons)
 
     return kb_builder.as_markup(resize_keyboard=True)
 

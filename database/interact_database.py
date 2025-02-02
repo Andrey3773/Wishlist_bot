@@ -5,7 +5,7 @@
 
 import sqlite3, string, random
 from aiogram.types import Message, CallbackQuery
-from lexicon.lexicon import LEXICON, LEXICON_ADMIN
+from lexicon.lexicon import LEXICON, LEXICON_ADMIN, KEYBOARD_LEXICON
 
 
 ##### СОЕДИНЕНИЕ С ФАЙЛОМ, В КОТОРОМ НАХОДИТСЯ БАЗА ДАННЫХ #####
@@ -35,6 +35,11 @@ def get_group_name(message: Message|CallbackQuery, group_id: int) -> str:
 ##### ВОЗВРАЩАЕТ GIFT_NAME ПО ЕГО ID ######
 def get_gift_name(gift_id: int) -> str:
     return cursor.execute(f"SELECT gift_name FROM Gifts WHERE gift_id = {gift_id}").fetchone()[0]
+
+
+##### ВОЗВРАЩАЕТ GIVER_ID ПО GIFT_ID #####
+def get_giver_id(gift_id: int) -> int:
+    return cursor.execute(f"SELECT giver_id  FROM Gifts WHERE gift_id = {gift_id}").fetchone()[0]
 
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ #####
@@ -80,7 +85,7 @@ def users_gifts(message: Message|CallbackQuery) -> list:
 
 
 
-###################### ПРЕОБРАЗОВАНИЕ СЛОВАРЯ В НУЖНУЮ СТРОКУ (СПИСОК, ОТПРАВЛЯЕМЫЙ ПОЛЬЗОАТЕЛЮ) #######################
+###################### ФОРМИРОВАНИЕ НУЖНОГО ТЕКСТА СООБЩЕНИЯ, ЕСЛИ ОН ЗАВИСИТ ОТ БД #######################
 
 ##### ВОЗВРАЩАЕТ ВСЕ ПОДАРКИ ПОЛЬЗОВАТЕЛЯ ПО ГРУППАМ #####
 def all_my_own_gifts(message: Message | CallbackQuery) -> str:
@@ -134,7 +139,6 @@ def all_gifts_by_user_in_group(message: Message|CallbackQuery, status=False) -> 
     user_id = int(message.data[message.data.index('_') + 1:])
     all_gifts = users_gifts(message)
     gifts = f"<u><b>{get_user_name(user_id).upper()}</b></u>" + '\n\n'
-    is_free = '  '
 
     if status:
         for gift in all_gifts:
@@ -156,6 +160,20 @@ def all_gifts_by_user_in_group(message: Message|CallbackQuery, status=False) -> 
 
 
     return gifts
+
+
+##### ВОЗВРАЩАЕТ СООБЩЕНИЕ С КАРТОЧКОЙ ПОДАРКА #####
+def what_to_do_with_gift(callback: CallbackQuery) -> str:
+    gift_id = int(callback.data[callback.data.rfind('_') + 1:])
+    giver_id = get_giver_id(gift_id)
+    gift_name = get_gift_name(gift_id)
+
+    if callback.from_user.id == giver_id:
+        return f"<b>{gift_name.upper()}</b>\n\n" + LEXICON['free_up_gift'][user_language(callback)]
+    elif giver_id == 0:
+        return f"<b>{gift_name.upper()}</b>\n\n" + LEXICON['take_gift'][user_language(callback)]
+    else:
+        return f"<b>{gift_name.upper()}</b>\n\n" + LEXICON['taken_gift'][user_language(callback)]
 
 
 
@@ -234,6 +252,23 @@ def my_own_new_gift(message: Message|CallbackQuery) -> None:
         cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
                        f"VALUES (?, ?)", (group_id, gift_id))
         db.commit()
+
+
+##### ОСВОБОДИТЬ ВЫБРАННЫЙ ПОДАРОК #####
+def free_up_gift(callback: CallbackQuery) -> None:
+    digit_data = callback.data[:-len(KEYBOARD_LEXICON['under_gift']['free_up_gift']['callback'])]
+    gift_id = int(digit_data[:digit_data.rfind('_')])
+
+    cursor.execute(f"UPDATE Gifts SET giver_id = 0 WHERE gift_id = {gift_id}")
+    db.commit()
+
+
+##### ЗАНЯТЬ ВЫБРАННЫЙ ПОДАРОК #####
+def take_gift(callback: CallbackQuery) -> None:
+    digit_data = callback.data[:-len(KEYBOARD_LEXICON['under_gift']['take_gift']['callback'])]
+    gift_id = int(digit_data[:digit_data.rfind('_')])
+    cursor.execute(f"UPDATE Gifts SET giver_id = {callback.from_user.id} WHERE gift_id = {gift_id}")
+    db.commit()
 
 
 ##### УДАЛЕНИЕ ПОДАРКА (ПОЛЬЗОВАТЕЛЬ ОТПРАВЛЯЕТ ЕГО НАЗВАНИЕ) #####
