@@ -237,7 +237,7 @@ def user_language(message: Message|CallbackQuery) -> str:
 ################################################# РАБОТА С ПОДАРКАМИ ##################################################
 
 ##### ПРОЕРЯЕТ ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ПОДАРОК С ТАКИМ ИМЕНЕМ #####
-def is_user_has_own_gift(message: Message|CallbackQuery) -> bool:
+def is_user_has_gift(message: Message|CallbackQuery) -> bool:
     user_id = message.from_user.id
     gift_name = str(message.text)
 
@@ -248,26 +248,55 @@ def is_user_has_own_gift(message: Message|CallbackQuery) -> bool:
                          ).fetchall()]
 
 
-##### ДОБАВЛЯЕТ ПОДАРОК В ОБЩИЙ ДОСТУП #####
-def my_own_new_gift(message: Message|CallbackQuery) -> None:
-    user_id = message.from_user.id
+##### СОЗДАЕТ НОВЫЙ ПОДАРОК, ПОКА НЕ ПРИВЯЗАННЫЙ НИ К ОДНОЙ ГРУППЕ, ВОЗВРАЩАЕТ ЕГО ID #####
+def create_new_gift(message: Message|CallbackQuery) -> int:
     gift_name = str(message.text)
-    cursor.execute(f"INSERT INTO Gifts (user_id, gift_name) "
-                   f"VALUES (?, ?)", (user_id, gift_name))
-    db.commit()
-    gift_id = cursor.execute(f"SELECT gift_id FROM Gifts "
-                             f"WHERE user_id = '{user_id}' AND gift_name = '{gift_name}'"
-                             ).fetchone()[0]
+    user_id = int(message.from_user.id)
 
-    accessible_group_ids = [row[0] for row in
-                            cursor.execute(
-                                f"SELECT group_id FROM Group_User "
-                                f"WHERE user_id = {user_id}"
-                            ).fetchall()]
-    for group_id in accessible_group_ids:
-        cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
-                       f"VALUES (?, ?)", (group_id, gift_id))
-        db.commit()
+    gift_id = cursor.execute(
+        f"INSERT INTO Gifts (user_id, gift_name) "
+        f"VALUES ({user_id}, '{gift_name}') "
+        f"RETURNING gift_id"
+    ).fetchone()[0]
+
+    db.commit()
+
+    return gift_id
+
+
+##### ДОБАВЛЯЕТ ПОДАРОК В ВЫБРАННУЮ ГРУППУ #####
+def add_new_gift_in_group(message: Message|CallbackQuery) -> None:
+    user_id = message.from_user.id
+    gift_id = int(message.data[message.data.rfind('_') + 1:])
+    chosen_group_id = int(message.data[:message.data.rfind('_')])
+
+    if get_group_name(message, chosen_group_id) == LEXICON['my_own_group'][user_language(message)]:
+        accessible_group_ids = [row[0] for row in
+                                cursor.execute(
+                                    f"SELECT group_id FROM Group_User "
+                                    f"WHERE user_id = {user_id}"
+                                ).fetchall()]
+        for group_id in accessible_group_ids:
+            if not is_gift_in_group(group_id, gift_id):
+                cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
+                               f"VALUES (?, ?)", (group_id, gift_id))
+                db.commit()
+    else:
+        if not is_gift_in_group(chosen_group_id, gift_id):
+            cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
+                           f"VALUES (?, ?)", (chosen_group_id, gift_id))
+            db.commit()
+
+
+##### ПРОВЕРЯЕТ, ЕСТЬ ЛИ ЗАДАННЫЙ ПОДАРОК В ЗАДАННОЙ ГРУППЕ #####
+def is_gift_in_group(group_id: int, gift_id: int) -> bool:
+    return [group_id, gift_id] in [
+        [row[0], row[1]]
+        for row in cursor.execute(
+            f"SELECT group_id, gift_id FROM Group_Gift "
+            f"WHERE gift_id = {gift_id}"
+        ).fetchall()
+    ]
 
 
 ##### ОСВОБОДИТЬ ВЫБРАННЫЙ ПОДАРОК #####
@@ -297,6 +326,10 @@ def delete_gift(message: Message|CallbackQuery) -> None:
         db.commit()
     else:
         cursor.execute(f"DELETE FROM Group_Gift WHERE group_id = {group_id} AND gift_id = {gift_id}")
+        db.commit()
+        if len(cursor.execute(f"SELECT * FROM Group_Gift WHERE gift_id = {gift_id}").fetchall()) == 0:
+            cursor.execute(f"DELETE FROM Gifts WHERE gift_id = {gift_id}")
+            db.commit()
 
 
 
