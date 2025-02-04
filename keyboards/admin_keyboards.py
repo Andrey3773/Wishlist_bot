@@ -4,7 +4,7 @@ from lexicon.lexicon import KEYBOARD_LEXICON
 from database import interact_database as data
 
 
-##### КЛАВИАТУРА ДЛЯ АДМИНОВ ПРИ ОТЗЫВАХ #####
+##### КЛАВИАТУРА ДЛЯ ВЫБОРА ЧТО ДЕЛАТЬ С ОТЗЫВОМ #####
 def admin_feedback_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     buttons = []
@@ -17,11 +17,13 @@ def admin_feedback_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMar
                 callback_data=KEYBOARD_LEXICON['admin'][i]['callback']
             )
         )
+
     kb_builder.row(*buttons, width=2)
+
     return kb_builder.as_markup()
 
 
-##### КЛАВИАТУРА ДЛЯ АДМИНОВ ПОД СПИСКОМ ПРОБЛЕМ #####
+##### КЛАВИАТУРА ДЛЯ АДМИНОВ ПОД СПИСКОМ БАГОВ #####
 def admin_issues_keyboard(message: Message|CallbackQuery):
     kb_builder = InlineKeyboardBuilder()
     language = data.user_language(message)
@@ -44,7 +46,7 @@ def admin_issues_keyboard(message: Message|CallbackQuery):
 
 
 ##### КЛАВИАТУРА ДЛЯ АДМИНОВ ПОД СПИСКОМ ОТЗЫВОВ #####
-def admin_feedbacks_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMarkup:
+def admin_feedback_list_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     language = data.user_language(message)
 
@@ -65,7 +67,7 @@ def admin_feedbacks_keyboard(message: Message | CallbackQuery) -> InlineKeyboard
     return kb_builder.as_markup()
 
 
-##### КЛАВИАТУРА ДЛЯ ВЫБОРА ЧЕ ДЕЛАТЬ С ПРОБЛЕМОЙ #####
+##### КЛАВИАТУРА ДЛЯ ВЫБОРА ЧТО ДЕЛАТЬ С БАГОМ #####
 def admin_solve_issue(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     buttons = []
@@ -83,4 +85,5 @@ def admin_solve_issue(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
                                         callback_data=KEYBOARD_LEXICON['admin_lower']['back']['callback']))
 
     kb_builder.row(*buttons, width=3)
+
     return kb_builder.as_markup()

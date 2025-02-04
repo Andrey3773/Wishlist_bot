@@ -42,14 +42,15 @@ async def incorrect_feedback(message: Message):
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
 
-##### НА СЛУЧАЙ, ЕСЛИ ПОЛЬЗОВАТЕЛЬ ИДИОТ И УДАЛИЛ МЕНЮ #####
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫЗОВ КОМАНДЫ HELP, А ТАКЖЕ ГЛАВНОГО МЕНЮ #####
 @router.message(Command(commands='help'))
 async def command_help(message: Message, state: FSMContext):
     await state.clear()
     data.all_accessible_gifts(message)
     await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(message))
+                         reply_markup=main_menu_keyboard(message),
+                         parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВСЕ НЕПРЕДУСМОТРЕННЫЕ ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ #####
@@ -58,4 +59,5 @@ async def other_messages(message: Message):
     sent_message = await message.answer(WRONG_LEXICON['other']['ru'])
     await sleep(10)
     await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+    await bot.delete_message(chat_id=message.chat.id,
+                             message_id=sent_message.message_id)

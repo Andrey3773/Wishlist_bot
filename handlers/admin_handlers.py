@@ -30,19 +30,24 @@ bot = Bot(token=config.bot.token)
 admins_config: Config = load_config('.env')
 
 
+
+################################################## РАБОТА С КОМАНДАМИ ##################################################
+
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ ПОВТОРНОГО ВЫЗОВА КОМАНДЫ START ОТ АДМИНОВ ######
 @router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admins))
 async def admin_start_again(message: Message):
     sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message)])
     await sleep(5)
     await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+    await bot.delete_message(chat_id=message.chat.id,
+                             message_id=sent_message.message_id)
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ START В ШТАТНОМ РЕЖИМЕ ДЛЯ АДМИНОВ #####
 @router.message(Command(commands='start'), IsAdmin(admins_config.bot.admins))
 async def start_command(message: Message, state: FSMContext):
-    await message.answer(LEXICON_ADMIN['/start']['ru'])
+    await message.answer(text=LEXICON_ADMIN['/start']['ru'],
+                         parse_mode='HTML')
     await state.set_state(FSMCommands.fill_name)
 
 
@@ -50,7 +55,31 @@ async def start_command(message: Message, state: FSMContext):
 @router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admins))
 async def give_feedback(message: Message):
     await message.answer(text=data.all_feedback(message),
-                         reply_markup=admin_kb.admin_feedback_keyboard(message))
+                         reply_markup=admin_kb.admin_feedback_keyboard(message),
+                         parse_mode='HTML')
+
+
+
+################################################### РАБОТА С ОТЗЫВАМИ ##################################################
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ СДЕЛАТЬ БАГОМ #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin']['make_issue']['callback'])
+async def make_issue_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMAdmin.fill_new_issue)
+    await callback.message.edit_text(text=data.all_feedback(callback) +
+                                          LEXICON_ADMIN['fill_make_issue'][data.user_language(callback)],
+                                     reply_markup=admin_kb.admin_feedback_list_keyboard(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЗНАЧЕНИЕ ОТЗЫВА БАГОМ #####
+@router.callback_query(F.data.isdigit(), StateFilter(FSMAdmin.fill_new_issue))
+async def new_issue_handler(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    data.new_issue(callback)
+    await callback.message.edit_text(text=LEXICON_ADMIN['make_issue'][user_language(callback)],
+                                     reply_markup=kb.back_button(callback),
+                                     parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ УДАЛИТЬ ОТЗЫВ #####
@@ -59,59 +88,8 @@ async def kill_feedback_button(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMAdmin.fill_kill_feedback)
     await callback.message.edit_text(text=data.all_feedback(callback) +
                                           LEXICON_ADMIN['fill_kill_feedback'][data.user_language(callback)],
-                                     reply_markup=admin_kb.admin_feedbacks_keyboard(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ СДЕЛАТЬ БАГОМ #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin']['make_issue']['callback'])
-async def make_issue_button(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(FSMAdmin.fill_new_issue)
-    await callback.message.edit_text(text=data.all_feedback(callback) +
-                                          LEXICON_ADMIN['fill_make_issue'][data.user_language(callback)],
-                                     reply_markup=admin_kb.admin_feedbacks_keyboard(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ПОСМОТРЕТЬ ПРОБЛЕМЫ #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin']['see_issues']['callback'])
-async def see_issue_button(callback: CallbackQuery):
-    await callback.message.edit_text(text=LEXICON_ADMIN['issues'][data.user_language(callback)] +
-                                          data.all_issues(callback),
-                                     reply_markup=admin_kb.admin_solve_issue(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ НАЗАД #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin_lower']['back']['callback'])
-async def back_button(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await callback.message.edit_text(text=data.all_feedback(callback),
-                                     reply_markup=admin_kb.admin_feedback_keyboard(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ЗАКРЫТЬ ПРОБЛЕМУ #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['solve_issue']['callback'])
-async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(FSMAdmin.fill_solved_issue)
-    await callback.message.edit_text(text=data.all_issues(callback) +
-                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
-                                     reply_markup=admin_kb.admin_issues_keyboard(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ОТКРЫТЬ ПРОБЛЕМУ #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['not_solve_issue']['callback'])
-async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(FSMAdmin.fill_unsolved_issue)
-    await callback.message.edit_text(text=data.all_issues(callback) +
-                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
-                                     reply_markup=admin_kb.admin_issues_keyboard(callback))
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ УДАЛИТЬ ПРОБЛЕМУ #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['kill_issue']['callback'])
-async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(FSMAdmin.fill_killed_issue)
-    await callback.message.edit_text(text=data.all_issues(callback) +
-                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
-                                     reply_markup=admin_kb.admin_issues_keyboard(callback))
+                                     reply_markup=admin_kb.admin_feedback_list_keyboard(callback),
+                                     parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА УДАЛЕНИЕ ОТЗЫВА #####
@@ -120,16 +98,30 @@ async def kill_feedback_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     data.kill_feedback(callback)
     await callback.message.edit_text(text=LEXICON_ADMIN['kill_feedback'][user_language(callback)],
-                                     reply_markup=kb.back_button(callback))
+                                     reply_markup=kb.back_button(callback),
+                                     parse_mode='HTML')
 
 
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЗНАЧЕНИЕ ОТЗЫВА ПРОБЛЕМОЙ #####
-@router.callback_query(F.data.isdigit(), StateFilter(FSMAdmin.fill_new_issue))
-async def new_issue_handler(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
-    data.new_issue(callback)
-    await callback.message.edit_text(text=LEXICON_ADMIN['make_issue'][user_language(callback)],
-                                     reply_markup=kb.back_button(callback))
+
+#################################################### РАБОТА С БАГАМИ ###################################################
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ПОСМОТРЕТЬ ПРОБЛЕМЫ #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin']['see_issues']['callback'])
+async def see_issue_button(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON_ADMIN['issues'][data.user_language(callback)] +
+                                          data.all_issues(callback),
+                                     reply_markup=admin_kb.admin_solve_issue(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ РЕШИТЬ ПРОБЛЕМУ #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['solve_issue']['callback'])
+async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMAdmin.fill_solved_issue)
+    await callback.message.edit_text(text=data.all_issues(callback) +
+                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
+                                     reply_markup=admin_kb.admin_issues_keyboard(callback),
+                                     parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА РЕШЕНИЕ ПРОБЛЕМЫ #####
@@ -138,7 +130,18 @@ async def solve_issue_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     data.solve_issue(callback)
     await callback.message.edit_text(text=LEXICON_ADMIN['solve_issue'][data.user_language(callback)],
-                                     reply_markup=kb.back_button(callback))
+                                     reply_markup=kb.back_button(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ОТКРЫТЬ ПРОБЛЕМУ #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['not_solve_issue']['callback'])
+async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMAdmin.fill_unsolved_issue)
+    await callback.message.edit_text(text=data.all_issues(callback) +
+                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
+                                     reply_markup=admin_kb.admin_issues_keyboard(callback),
+                                     parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОТКРЫТИЕ ПРОБЛЕМЫ #####
@@ -147,7 +150,18 @@ async def not_solve_issue_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     data.not_solve_issue(callback)
     await callback.message.edit_text(text=LEXICON_ADMIN['make_issue'][user_language(callback)],
-                                     reply_markup=kb.back_button(callback))
+                                     reply_markup=kb.back_button(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ УДАЛИТЬ ПРОБЛЕМУ #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin_in_issues']['kill_issue']['callback'])
+async def solve_issue_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMAdmin.fill_killed_issue)
+    await callback.message.edit_text(text=data.all_issues(callback) +
+                                     LEXICON_ADMIN['choose_issue'][data.user_language(callback)],
+                                     reply_markup=admin_kb.admin_issues_keyboard(callback),
+                                     parse_mode='HTML')
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА УДАЛЕНИЕ ПРОБЛЕМЫ #####
@@ -156,4 +170,17 @@ async def kill_issue_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     data.kill_issue(callback)
     await callback.message.edit_text(text=LEXICON_ADMIN['kill_issue'][user_language(callback)],
-                                     reply_markup=kb.back_button(callback))
+                                     reply_markup=kb.back_button(callback),
+                                     parse_mode='HTML')
+
+
+
+################################################### СЛУЖЕБНЫЕ КНОПКИ ###################################################
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ НАЗАД #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['admin_lower']['back']['callback'])
+async def back_button(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(text=data.all_feedback(callback),
+                                     reply_markup=admin_kb.admin_feedback_keyboard(callback),
+                                     parse_mode='HTML')

@@ -49,7 +49,6 @@ def create_database():
         )
     ''')
 
-    # Подарки в группах
     # Составы групп
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Group_Gift (
@@ -68,7 +67,7 @@ def create_database():
         )
     ''')
 
-    # Проблемы
+    # Баги
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Issues (
             issue_id INTEGER PRIMARY KEY,

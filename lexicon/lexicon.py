@@ -123,6 +123,13 @@ KEYBOARD_LEXICON: dict[str: dict[str: dict[str: str]]] = {
             'callback': 'no_button'
         }
     },
+    'kill_group': {
+        'kill_group': {
+            'ru': 'Удалить группу',
+            'eng': '',
+            'callback': 'kill_group'
+        }
+    },
 }
 
 
@@ -152,6 +159,10 @@ LEXICON: dict[str: dict[str: str|list]] = {
     },
     'correct_new_group': {
         'ru': 'Принято, пароль можно посмотреть в списке групп.',
+        'eng': ''
+    },
+    'kill_group': {
+        'ru': 'Окей, группа удалена.',
         'eng': ''
     },
     'user_already_has_group': {
@@ -254,6 +265,10 @@ LEXICON: dict[str: dict[str: str|list]] = {
     'not_free_gift': {
         'ru': '❌',
         'eng': '❌'
+    },
+    'one_more_group': {
+        'ru': 'Хотите добавить подарок еще в какую-то группу?',
+        'eng': ''
     },
 }
 

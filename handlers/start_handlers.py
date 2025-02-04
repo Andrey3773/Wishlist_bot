@@ -31,7 +31,6 @@ bot = Bot(token=config.bot.token)
 async def repeat_start_command(message: Message):
     sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(message)],
                                         parse_mode='HTML')
-
     await sleep(10)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
@@ -55,6 +54,8 @@ async def correct_registration(message: Message, state: FSMContext):
                          data.give_name(message) +
                          LEXICON['correct_registration'][data.user_language(message)][1])
     await state.clear()
-    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
+    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)],
+                         parse_mode='HTML')
     await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(message))
+                         reply_markup=main_menu_keyboard(message),
+                         parse_mode='HTML')

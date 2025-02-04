@@ -4,7 +4,7 @@
 
 
 from aiogram.filters import BaseFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from database import interact_database as data
 from emoji import demojize
 
@@ -19,7 +19,7 @@ class IsAdmin(BaseFilter):
         return message.from_user.id in self.admins
 
 
-##### ФИЛЬТР, ЧТОБЫ ЛОВИТЬ УЖЕ ЗАРЕГИСТРИРОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ #####
+##### ФИЛЬТР, ПРОВЕРЯЮЩИЙ ЗАРЕГИСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
 class IsUserInData(BaseFilter):
     async def __call__(self, message: Message):
         return data.user_in_data(message)
@@ -39,14 +39,6 @@ class IsNameCorrect(BaseFilter):
             flag = False
         return flag
 
-
-##### ФИЛЬТР, ПРОВЕРЯЮЩИЙ КОРРЕКТНОСТЬ УДАЛЯЕМОЙ ИДЕИ ДЛЯ ПОДАРКА #####
-class IsDeletedIdeaCorrect(BaseFilter):
-    async def __call__(self, message: Message):
-        if message.text is not None:
-            return '    ' + str(message.text) + '\t\n' in data.all_my_own_gifts(message)
-        else:
-            return False
 
 ##### ФИЛЬТР, ПРОВЕРЯЮЩЙИ КОРРЕКТНОСТЬ ПАРОЛЯ #####
 class IsPasswordCorrect(BaseFilter):

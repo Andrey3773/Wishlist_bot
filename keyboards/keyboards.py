@@ -4,14 +4,6 @@ from lexicon.lexicon import KEYBOARD_LEXICON, LEXICON
 from database import interact_database as data
 
 
-##### КЛАВИАТУРА С ОДНОЙ КНОПКОЙ "В ГЛАВНОЕ МЕНЮ" #####
-def main_menu_button(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
-    language = data.user_language(message)
-    button = InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
-                                  callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
-    return InlineKeyboardMarkup(inline_keyboard=[[button]])
-
-
 ##### КЛАВИАТУРА ГЛАВНОГО МЕНЮ #####
 def main_menu_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     language = data.user_language(message)
@@ -23,7 +15,9 @@ def main_menu_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
                              callback_data=f"{main_menu_lexicon[i]['callback']}"
                              ) for i in main_menu_lexicon if i != 'main_menu_button'
     ]
+
     kb_builder.row(*buttons, width=2)
+
     return kb_builder.as_markup(resize_keyboard=True)
 
 
@@ -57,8 +51,48 @@ def my_list_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     return kb_builder.as_markup(resize_keyboard=True)
 
 
+##### КЛАВИАТУРА ГРУПП ДЛЯ ДОБАВЛЕНИЯ НОВОГО ПОДАРКА #####
+def groups_for_new_gift_keyboard(
+        message: Message | CallbackQuery,
+        gift_id,
+        is_button_no=False,
+        not_all=False) -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+    group_ids = data.users_in_groups(message, not_all=not_all)
+    language = data.user_language(message)
+    gift_id = int(gift_id)
+    buttons = []
+
+    for group_id in group_ids:
+        if not data.is_gift_in_group(int(group_id), int(gift_id)):
+            buttons.append(
+                InlineKeyboardButton(
+                    text=data.get_group_name(message, group_id),
+                    callback_data=str(group_id) + '_' + str(gift_id)
+                )
+            )
+
+    service_buttons = []
+
+    if not is_button_no:
+        service_buttons.append(
+            InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
+                                 callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
+        )
+    else:
+        service_buttons.append(
+            InlineKeyboardButton(text=KEYBOARD_LEXICON['no_button']['no'][language],
+                                 callback_data=KEYBOARD_LEXICON['no_button']['no']['callback'])
+        )
+
+    kb_builder.row(*buttons, width=2)
+    kb_builder.row(*service_buttons, width=1)
+
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
 ##### КЛАВИАТУРА ПОД СПИСКОМ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ (СО СПИСКОМ ГРУПП) #####
-def my_groups_keyboard(message: Message|CallbackQuery, not_all=True) -> InlineKeyboardMarkup:
+def groups_keyboard(message: Message | CallbackQuery, not_all=True) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     all_users = data.users_in_groups(message, not_all=not_all)
     language = data.user_language(message)
@@ -82,47 +116,8 @@ def my_groups_keyboard(message: Message|CallbackQuery, not_all=True) -> InlineKe
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-##### КЛАВИАТУРА ГРУПП ДЛЯ ДОБАВЛЕНИЯ НОВОГО ПОДАРКА #####
-def my_groups_for_new_gift_keyboard(
-        message: Message|CallbackQuery,
-        gift_id,
-        is_button_no=False,
-        not_all=False) -> InlineKeyboardMarkup:
-
-    kb_builder = InlineKeyboardBuilder()
-    group_ids = data.users_in_groups(message, not_all=not_all)
-    language = data.user_language(message)
-    gift_id = int(gift_id)
-    buttons = []
-
-    for group_id in group_ids:
-        if not data.is_gift_in_group(int(group_id), int(gift_id)):
-            buttons.append(
-                InlineKeyboardButton(
-                    text=data.get_group_name(message, group_id),
-                    callback_data=str(group_id) + '_' + str(gift_id)
-                )
-            )
-    service_buttons = []
-    if not is_button_no:
-        service_buttons.append(
-            InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
-                                 callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
-        )
-    else:
-        service_buttons.append(
-            InlineKeyboardButton(text=KEYBOARD_LEXICON['no_button']['no'][language],
-                                 callback_data=KEYBOARD_LEXICON['no_button']['no']['callback'])
-        )
-
-    kb_builder.row(*buttons, width=2)
-    kb_builder.row(*service_buttons, width=1)
-
-    return kb_builder.as_markup(resize_keyboard=True)
-
-
 ##### КЛАВИАТУРА ПОД СПИСКОМ ПОДАРКОВ ПО ПОЛЬЗОВАТЕЛЯМ (СО СПИСКОМ ПОЛЬЗОВАТЕЛЕЙ) #####
-def under_group_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMarkup:
+def users_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     all_users = data.users_gifts_in_group(message)
     language = data.user_language(message)
@@ -136,13 +131,22 @@ def under_group_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMark
                     callback_data=message.data + '_' + str(i)
                 )
             )
+
     service_buttons = [
         InlineKeyboardButton(text=KEYBOARD_LEXICON['group_password']['get_password'][language],
                              callback_data=message.data + '_' +
-                                           KEYBOARD_LEXICON['group_password']['get_password']['callback']),
+                                           KEYBOARD_LEXICON['group_password']['get_password']['callback'])
+    ]
+    if data.user_is_owner(message):
+        service_buttons.append(
+            InlineKeyboardButton(text=KEYBOARD_LEXICON['kill_group']['kill_group'][language],
+                                 callback_data=message.data + '_' +
+                                           KEYBOARD_LEXICON['kill_group']['kill_group']['callback'])
+        )
+    service_buttons.append(
         InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
                              callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
-    ]
+    )
 
     kb_builder.row(*buttons, width=3)
     kb_builder.row(*service_buttons, width=1)
@@ -150,10 +154,10 @@ def under_group_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMark
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-##### КЛАВИАТУРЕ ПОД СПИСКОМ ПОДАРКОВ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ (СО СПИСКОМ ПОДАРКОВ) #####
-def gifts_by_user_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
+##### КЛАВИАТУРА ПОД СПИСКОМ ПОДАРКОВ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ (СО СПИСКОМ ПОДАРКОВ) #####
+def gifts_keyboard(message: Message | CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
-    all_gifts = data.users_gifts(message)
+    all_gifts = data.user_gifts_in_group(message)
     language = data.user_language(message)
     buttons = []
 
@@ -178,7 +182,6 @@ def gifts_by_user_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMark
 ##### КЛАВИАТУРА ПОД КАРТОЧКОЙ ПОДАРКА #####
 def under_gift_keyboard(callback: Message|CallbackQuery) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
-
     gift_id = int(callback.data[callback.data.rfind('_') + 1:])
     giver_id = data.get_giver_id(gift_id)
     language = data.user_language(callback)
@@ -209,6 +212,14 @@ def under_gift_keyboard(callback: Message|CallbackQuery) -> InlineKeyboardMarkup
     kb_builder.row(*service_buttons)
 
     return kb_builder.as_markup(resize_keyboard=True)
+
+
+##### ОТДЕЛЬНАЯ КНОПКА "В ГЛАВНОЕ МЕНЮ" #####
+def main_menu_button(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
+    language = data.user_language(message)
+    button = InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
+                                  callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
+    return InlineKeyboardMarkup(inline_keyboard=[[button]])
 
 
 ##### ОТДЕЛЬНАЯ КНОПКА НАЗАД #####
