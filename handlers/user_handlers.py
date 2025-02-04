@@ -88,18 +88,34 @@ async def new_gift_button(callback: CallbackQuery, state: FSMContext):
                                      reply_markup=kb.main_menu_button(callback))
 
 
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ DELETE GIFT IN MY LISTЕ #####
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ DELETE GIFT IN MY LIST #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['in_my_list']['delete_gift']['callback'])
 async def delete_gift_button(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(FSMMenu.fill_deleted_idea)
+    await state.set_state(FSMMenu.fill_group_for_delete_idea)
     await callback.message.edit_text(text=data.all_my_own_gifts(callback) +
                                       '\n\n' +
                                       LEXICON['fill_deleted_gift'][data.user_language(callback)],
-                                 reply_markup=kb.main_menu_button(callback),
+                                 reply_markup=kb.my_groups_keyboard(callback, not_all=False),
                                  parse_mode='HTML')
 
 
-##### ХЭНДЛЕР ОБРАБАТЫВАЮЩИЙ НАЖАТИЕ КНОПКИ С НАЗВАНИЕМ ГРУППЫ, В КОТОРУЮ НАДО ДОБАВИТЬ ПОДАРОК #####
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫБОР ГРУППЫ, ИЗ КОТОРОЙ НАДО УДАЛИТЬ ПОДАРОК #####
+@router.callback_query(F.data.replace('_', '').isdigit(), StateFilter(FSMMenu.fill_group_for_delete_idea))
+async def group_for_delete_gift_button(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(FSMMenu.fill_deleted_idea)
+    await callback.message.edit_text(text='теперь выберите подарочек',
+                                     reply_markup=kb.gifts_by_user_keyboard(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫБОР ПОДАРКА, КОТОРЫЙ НАДО УДАЛИТЬ #####
+@router.callback_query(F.data.replace('_', '').isdigit(), StateFilter(FSMMenu.fill_deleted_idea))
+async def group_for_delete_gift_button(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(text='кайфарики, все удалено',
+                                     reply_markup=kb.main_menu_button(callback),
+                                     parse_mode='HTML')
+    data.delete_gift(callback)
 
 
 
@@ -193,17 +209,6 @@ async def take_new_gift_idea(message: Message, state: FSMContext):
     else:
         text = LEXICON['user_already_has_gift'][data.user_language(message)]
     sent_message = await message.answer(text=text)
-    await sleep(5)
-    await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
-
-
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОРРЕТНО ВВЕДЕННУЮ ИДЕЮ ДЛЯ УДАЛЕНИЯ #####
-@router.message(StateFilter(FSMMenu.fill_deleted_idea), IsDeletedIdeaCorrect())
-async def take_deleted_idea(message: Message, state: FSMContext):
-    sent_message = await message.answer(text=LEXICON['correct_deleted_gift'][data.user_language(message)])
-    data.delete_my_own_gift(message)
-    await state.clear()
     await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)

@@ -57,10 +57,10 @@ def my_list_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-##### КЛАВИАТУРА ПОД СПИСКОМ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ (СО СПИСОКМ ГРУПП) #####
-def my_groups_keyboard(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
+##### КЛАВИАТУРА ПОД СПИСКОМ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ (СО СПИСКОМ ГРУПП) #####
+def my_groups_keyboard(message: Message|CallbackQuery, not_all=True) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
-    all_users = data.users_in_groups(message)
+    all_users = data.users_in_groups(message, not_all=not_all)
     language = data.user_language(message)
     buttons = []
 
@@ -178,3 +178,7 @@ def back_button(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     button = InlineKeyboardButton(text=KEYBOARD_LEXICON['admin_lower']['back'][language],
                                   callback_data=KEYBOARD_LEXICON['admin_lower']['back']['callback'])
     return InlineKeyboardMarkup(inline_keyboard=[[button]])
+
+
+##### КЛАВИАТУРА СО СПИСКОМ ВСЕХ ПОДАРКОВ ДЛЯ УДАЛЕНИЯ #####
+

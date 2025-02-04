@@ -43,7 +43,7 @@ def get_giver_id(gift_id: int) -> int:
 
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ #####
-def users_in_groups(message: Message|CallbackQuery) -> dict:
+def users_in_groups(message: Message|CallbackQuery, not_all=True) -> dict:
     user_id = message.from_user.id
     all_users = {}
 
@@ -53,7 +53,8 @@ def users_in_groups(message: Message|CallbackQuery) -> dict:
         for user_id in all_accessible_gifts(message)[group_id]:
             all_users[group_id].append(user_id)
 
-    all_users.pop(cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{str(user_id)}'").fetchone()[0])
+    if not_all:
+        all_users.pop(cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{str(user_id)}'").fetchone()[0])
 
     return all_users
 
@@ -74,14 +75,29 @@ def users_gifts_in_group(message: Message | CallbackQuery) -> dict:
 
 ##### ВОЗВРАЩАЕТ СПИСОК ПОДАРКОВ ВЫБРАННОГО ПОЛЬЗОВАТЕЛЯ В ВЫБРАННОЙ ГРУППЕ #####
 def users_gifts(message: Message|CallbackQuery) -> list:
-    group_id = int(message.data[:message.data.index('_')])
-    user_id = int(message.data[message.data.index('_') + 1:])
+    if '_' in str(message.data):
+        group_id = int(message.data[:message.data.index('_')])
+        user_id = int(message.data[message.data.index('_') + 1:])
+    else:
+        group_id = int(message.data)
+        user_id = message.from_user.id
+
     gifts = []
 
     for gift_id in all_accessible_gifts(message)[group_id][user_id]:
         gifts.append(gift_id)
 
     return gifts
+
+
+##### ВОЗВРАЩАЕТ ВСЕ ПОДАРКИ ПОЛЬЗОВАТЕЛЯ ПО ИХ ID #####
+def all_users_gifts(message: Message|CallbackQuery) -> dict:
+    return {row[0]: row[1]
+            for row in cursor.execute(
+            f"SELECT gift_id, gift_name "
+            f"FROM Gifts "
+            f"WHERE user_id = {message.from_user.id}"
+        ).fetchall()}
 
 
 
@@ -271,13 +287,16 @@ def take_gift(callback: CallbackQuery) -> None:
     db.commit()
 
 
-##### УДАЛЕНИЕ ПОДАРКА (ПОЛЬЗОВАТЕЛЬ ОТПРАВЛЯЕТ ЕГО НАЗВАНИЕ) #####
-# TODO сделать адекватное удаление, а не просто копипастингом из списка
-def delete_my_own_gift(message: Message|CallbackQuery) -> None:
-    user_id = message.from_user.id
-    gift_name = message.text
-    cursor.execute(f"DELETE FROM Gifts WHERE user_id = {user_id} AND gift_name = '{gift_name}'")
-    db.commit()
+##### УДАЛЕНИЕ ПОДАРКА ПО КНОПКЕ #####
+def delete_gift(message: Message|CallbackQuery) -> None:
+    gift_id = int(message.data[message.data.rfind('_') + 1:])
+    group_id = int(message.data[:message.data.rfind('_')])
+    user_id = str(message.from_user.id)
+    if group_id == int(cursor.execute(f"SELECT group_id FROM Groups WHERE password = {user_id}").fetchone()[0]):
+        cursor.execute(f"DELETE FROM Gifts WHERE gift_id = {gift_id}")
+        db.commit()
+    else:
+        cursor.execute(f"DELETE FROM Group_Gift WHERE group_id = {group_id} AND gift_id = {gift_id}")
 
 
 

@@ -21,6 +21,7 @@ class FSMMenu(StatesGroup):
     fill_deleted_idea = State()
     fill_new_group = State()
     fill_password = State()
+    fill_group_for_delete_idea = State()
 
 
 ##### МАШИНА СОСТОЯНИЙ ДЛЯ АДМИНОВ #####
