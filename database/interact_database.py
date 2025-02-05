@@ -57,7 +57,7 @@ def get_giver_id(gift_id: int) -> int:
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ #####
 def users_in_groups(message: Message|CallbackQuery, not_all=True) -> dict:
-    user_id = message.from_user.id
+    user_id_from_message = message.from_user.id
     all_users = {}
 
     for group_id in all_accessible_gifts(message):
@@ -67,7 +67,11 @@ def users_in_groups(message: Message|CallbackQuery, not_all=True) -> dict:
             all_users[group_id].append(user_id)
 
     if not_all:
-        all_users.pop(cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{str(user_id)}'").fetchone()[0])
+        all_users.pop(cursor.execute(
+            f"SELECT group_id "
+            f"FROM Groups "
+            f"WHERE password = '{str(user_id_from_message)}'"
+        ).fetchone()[0])
 
     return all_users
 

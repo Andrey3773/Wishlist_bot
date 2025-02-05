@@ -7,7 +7,7 @@ from aiogram import Router, Bot
 from aiogram.filters import StateFilter, Command
 from aiogram.types import Message
 from lexicon.lexicon import WRONG_LEXICON, LEXICON, LEXICON_COMMAND
-from handlers.fsm import FSMCommands
+from handlers.fsm import FSMCommands, FSMMenu
 from aiogram.fsm.context import FSMContext
 from config_data.config import Config, load_config
 from asyncio import sleep
@@ -28,7 +28,7 @@ bot = Bot(token=config.bot.token)
 @router.message(StateFilter(FSMCommands.fill_name))
 async def incorrect_registration(message: Message):
     sent_message = await message.answer(WRONG_LEXICON['incorrect_registration']['ru'])
-    await sleep(10)
+    await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
@@ -37,7 +37,16 @@ async def incorrect_registration(message: Message):
 @router.message(StateFilter(FSMCommands.fill_feedback))
 async def incorrect_feedback(message: Message):
     sent_message = await message.answer(WRONG_LEXICON['incorrect_feedback']['ru'])
-    await sleep(10)
+    await sleep(5)
+    await message.delete()
+    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НЕКОРРЕКТНО ВВЕДЕННЫЙ ПАРОЛЬ #####
+@router.message(StateFilter(FSMMenu.fill_password))
+async def incorrect_feedback(message: Message):
+    sent_message = await message.answer(WRONG_LEXICON['incorrect_password']['ru'])
+    await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
@@ -57,7 +66,7 @@ async def command_help(message: Message, state: FSMContext):
 @router.message()
 async def other_messages(message: Message):
     sent_message = await message.answer(WRONG_LEXICON['other']['ru'])
-    await sleep(10)
+    await sleep(5)
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id,
                              message_id=sent_message.message_id)

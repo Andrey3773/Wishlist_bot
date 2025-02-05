@@ -9,7 +9,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from config_data.config import Config, load_config
 from filters.filters import IsAdmin, IsUserInData
-from lexicon.lexicon import LEXICON_ADMIN, KEYBOARD_LEXICON
+from lexicon.lexicon import LEXICON_ADMIN, KEYBOARD_LEXICON, LEXICON
 from database.interact_database import user_language
 from handlers.fsm import FSMCommands, FSMAdmin
 from database import interact_database as data
@@ -56,6 +56,17 @@ async def start_command(message: Message, state: FSMContext):
 async def give_feedback(message: Message):
     await message.answer(text=data.all_feedback(message),
                          reply_markup=admin_kb.admin_feedback_keyboard(message),
+                         parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫЗОВ КОМАНДЫ HELP, А ТАКЖЕ ГЛАВНОГО МЕНЮ #####
+@router.message(Command(commands='help'), IsAdmin(admins_config.bot.admins))
+async def command_help(message: Message, state: FSMContext):
+    await state.clear()
+    data.all_accessible_gifts(message)
+    await message.answer(text=LEXICON_ADMIN['/help'][data.user_language(message)])
+    await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
+                         reply_markup=kb.main_menu_keyboard(message),
                          parse_mode='HTML')
 
 
