@@ -26,15 +26,6 @@ bot = Bot(token=config.bot.token)
 
 ############################################ ОБРАБОТКА КНОПОК ГЛАВНОГО МЕНЮ ############################################
 
-##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ НАЖАТИЯ КНОПКИ MAIN MENU #####
-@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
-async def main_menu_button(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await callback.message.edit_text(text=LEXICON['main_menu'][data.user_language(callback)],
-                                     reply_markup=kb.main_menu_keyboard(callback),
-                                     parse_mode='HTML')
-
-
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY LIST #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['my_list']['callback'])
 async def my_list_button(callback: CallbackQuery):
@@ -199,6 +190,15 @@ async def get_password_button(callback: CallbackQuery):
 @router.callback_query(F.data[-len(KEYBOARD_LEXICON['kill_group']['kill_group']['callback']):] ==
                        KEYBOARD_LEXICON['kill_group']['kill_group']['callback'])
 async def kill_group_button(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['approve_delete_group'][data.user_language(callback)],
+                                     reply_markup=kb.approve_delete_group(callback),
+                                     parse_mode='HTML')
+
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КНОПКУ ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ГРУППЫ #####
+@router.callback_query(F.data[-len(KEYBOARD_LEXICON['kill_group']['approve_kill_group']['callback']):] ==
+                       KEYBOARD_LEXICON['kill_group']['approve_kill_group']['callback'])
+async def kill_group_button(callback: CallbackQuery):
     data.kill_group(callback)
     await callback.message.edit_text(text=LEXICON['kill_group'][data.user_language(callback)],
                                      reply_markup=kb.main_menu_button(callback),
@@ -301,6 +301,15 @@ async def take_password_for_group(message: Message, state: FSMContext):
 
 
 ################################################### СЛУЖЕБНЫЕ КНОПКИ ###################################################
+
+##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ НАЖАТИЯ КНОПКИ MAIN MENU #####
+@router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
+async def main_menu_button(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(text=LEXICON['main_menu'][data.user_language(callback)],
+                                     reply_markup=kb.main_menu_keyboard(callback),
+                                     parse_mode='HTML')
+
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ ОК #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['ok_button']['ok']['callback'])

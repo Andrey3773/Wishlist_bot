@@ -74,12 +74,7 @@ def groups_for_new_gift_keyboard(
 
     service_buttons = []
 
-    if not is_button_no:
-        service_buttons.append(
-            InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
-                                 callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
-        )
-    else:
+    if is_button_no:
         service_buttons.append(
             InlineKeyboardButton(text=KEYBOARD_LEXICON['no_button']['no'][language],
                                  callback_data=KEYBOARD_LEXICON['no_button']['no']['callback'])
@@ -235,4 +230,21 @@ def ok_button(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
     language = data.user_language(message)
     button = InlineKeyboardButton(text=KEYBOARD_LEXICON['ok_button']['ok'][language],
                                   callback_data=KEYBOARD_LEXICON['ok_button']['ok']['callback'])
+
     return InlineKeyboardMarkup(inline_keyboard=[[button]])
+
+
+##### КНОПКА ДЛЯ ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ГРУППЫ #####
+def approve_delete_group(message: Message|CallbackQuery) -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+    language = data.user_language(message)
+    buttons = [InlineKeyboardButton(text=KEYBOARD_LEXICON['kill_group']['approve_kill_group'][language],
+                                  callback_data=message.data + '_' +
+                                                KEYBOARD_LEXICON['kill_group']['approve_kill_group']['callback']),
+               InlineKeyboardButton(text=KEYBOARD_LEXICON['main_menu']['main_menu_button'][language],
+                                    callback_data=KEYBOARD_LEXICON['main_menu']['main_menu_button']['callback'])
+               ]
+
+    kb_builder.row(*buttons, width=1)
+
+    return kb_builder.as_markup(resize_keyboard=True)
