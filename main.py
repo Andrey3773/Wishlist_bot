@@ -24,7 +24,7 @@ async def main():
 
 
     # Этот роутер не влияет на функционал бота и добавлен из личных пожеланий
-    # dp.include_router(private.router)
+    dp.include_router(private.router)
 
 
     # Инициализация всех необходимых роутеров
