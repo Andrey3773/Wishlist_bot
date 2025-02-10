@@ -9,7 +9,7 @@ from lexicon.lexicon import LEXICON, LEXICON_ADMIN, KEYBOARD_LEXICON
 
 
 ##### СОЕДИНЕНИЕ С ФАЙЛОМ, В КОТОРОМ НАХОДИТСЯ БАЗА ДАННЫХ #####
-db = sqlite3.connect('database\database.sqlite')
+db = sqlite3.connect('database/database.sqlite')
 cursor = db.cursor()
 cursor.execute('PRAGMA foreign_keys = ON')
 
