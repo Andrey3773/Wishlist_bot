@@ -229,7 +229,11 @@ def all_feedback(message: Message | CallbackQuery) -> str:
 
     if len(cursor.execute('SELECT * FROM Feedback').fetchall()) > 0:
         for row in cursor.execute('SELECT * FROM Feedback'):
-            feedback += str(row[0]) + '. ' + row[1] + '\n\n'
+            if type(row[2]) == int:
+                name = get_user_name(row[2])
+            else:
+                name = 'None'
+            feedback += str(row[0]) + '. ' + name + ': ' + row[1] + '\n\n'
     else:
         feedback = LEXICON_ADMIN['no_feedback'][user_language(message)]
 
@@ -603,8 +607,9 @@ def all_accessible_gifts(message: Message|CallbackQuery) -> dict:
 ##### ЗАНЕСЕНИЕ НОВОГО ОТЗЫВА В БАЗУ ДАННЫХ #####
 def new_feedback(message: Message|CallbackQuery) -> None:
     text = str(message.text)
+    user_id = int(message.from_user.id)
 
-    cursor.execute(f"INSERT INTO Feedback (feedback_text) VALUES ('{text}')")
+    cursor.execute(f"INSERT INTO Feedback (feedback_text, user_id) VALUES ('{text}', {user_id})")
     db.commit()
 
 
@@ -625,8 +630,6 @@ def new_issue(callback: Message | CallbackQuery) -> None:
                                    f"WHERE feedback_id = {feedback_id}").fetchone()[0]
 
     cursor.execute(f"INSERT INTO Issues (issue_text) VALUES ('{feedback_text}')")
-    db.commit()
-    cursor.execute(f"DELETE FROM Feedback WHERE feedback_id = {feedback_id}")
     db.commit()
 
 
