@@ -1,0 +1,88 @@
+from config_data.config import load_config
+import psycopg2
+import sqlite3
+
+
+postgres_db = load_config('.env').db
+postgres_connection = psycopg2.connect(dbname=postgres_db.db_name, user=postgres_db.db_user, password=postgres_db.db_password, host=postgres_db.db_host)
+postgres_cursor = postgres_connection.cursor()
+
+
+sqlite_connection = sqlite3.connect('database.sqlite')
+sqlite_cursor = sqlite_connection.cursor()
+sqlite_cursor.execute('PRAGMA foreign_keys = ON')
+
+
+tables = ['users', 'gifts', 'groups', 'group_user', 'group_gift', 'feedback', 'issues']
+
+
+def create_postgres_database():
+    postgres_cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Users (
+            user_id BIGINT PRIMARY KEY,
+            user_name TEXT,
+            language TEXT
+        );
+    CREATE TABLE IF NOT EXISTS Gifts (
+            gift_id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            giver_id BIGINT DEFAULT 0,
+            gift_name TEXT
+        );
+    CREATE TABLE IF NOT EXISTS Groups (
+            group_id SERIAL PRIMARY KEY,
+            group_name TEXT,
+            password TEXT,
+            owner_id BIGINT
+        );
+    CREATE TABLE IF NOT EXISTS Group_User (
+            group_id INTEGER,
+            user_id BIGINT,
+            FOREIGN KEY (group_id) REFERENCES Groups(group_id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+        );
+    CREATE TABLE IF NOT EXISTS Group_Gift (
+            group_id INTEGER,
+            gift_id INTEGER,
+            FOREIGN KEY (group_id) REFERENCES Groups(group_id) ON DELETE CASCADE,
+            FOREIGN KEY (gift_id) REFERENCES Gifts(gift_id) ON DELETE CASCADE
+        );
+    CREATE TABLE IF NOT EXISTS Feedback (
+            feedback_id SERIAL PRIMARY KEY,
+            feedback_text TEXT,
+            user_id BIGINT
+        );
+    CREATE TABLE IF NOT EXISTS Issues (
+            issue_id SERIAL PRIMARY KEY,
+            issue_text TEXT,
+            solved BOOLEAN DEFAULT False
+        );
+    ''')
+
+    postgres_connection.commit()
+
+
+def migration():
+    for table_name in tables:
+        postgres_cursor.execute(f"""
+                SELECT attname AS column_name
+                FROM pg_attribute
+                WHERE attrelid = '{table_name}'::regclass
+                  AND attnum > 0
+                  AND NOT attisdropped
+                ORDER BY attnum;
+            """)
+        all_columns = postgres_cursor.fetchall()
+        column_names = [col[0] for col in all_columns]
+        query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['%s'] * len(column_names))});"
+
+        sqlite_data = [row for row in sqlite_cursor.execute(f"SELECT * FROM {table_name}").fetchall()]
+
+        for values in sqlite_data:
+            if table_name == 'issues':
+                values = (values[0], values[1], bool(values[2]))
+            postgres_cursor.execute(query, values)
+            postgres_connection.commit()
+
+create_postgres_database()
+migration()

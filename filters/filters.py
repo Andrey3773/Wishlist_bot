@@ -21,8 +21,8 @@ class IsAdmin(BaseFilter):
 
 ##### ФИЛЬТР, ПРОВЕРЯЮЩИЙ ЗАРЕГИСТРИРОВАННОСТЬ ПОЛЬЗОВАТЕЛЯ #####
 class IsUserInData(BaseFilter):
-    async def __call__(self, message: Message):
-        return data.user_in_data(message)
+    async def __call__(self, message: Message, db_access):
+        return data.user_in_data(db_access, message)
 
 
 ##### ФИЛЬТР, ПРОЕРЯЮЩИЙ КОРРЕКТНОСТЬ ИМЕНИ ПОЛЬЗОВАТЕЛЯ #####
@@ -42,8 +42,8 @@ class IsNameCorrect(BaseFilter):
 
 ##### ФИЛЬТР, ПРОВЕРЯЮЩЙИ КОРРЕКТНОСТЬ ПАРОЛЯ #####
 class IsPasswordCorrect(BaseFilter):
-    async def __call__(self, message: Message):
+    async def __call__(self, message: Message, db_access):
         if message.text is not None:
-            return data.is_password_correct(message)
+            return data.is_password_correct(db_access, message)
         else:
             return False

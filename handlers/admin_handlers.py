@@ -34,7 +34,7 @@ admins_config: Config = load_config('.env')
 ################################################## РАБОТА С КОМАНДАМИ ##################################################
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ОБРАБОТКУ ПОВТОРНОГО ВЫЗОВА КОМАНДЫ START ОТ АДМИНОВ ######
-@router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admins))
+@router.message(Command(commands='start'), IsUserInData(), IsAdmin(admins_config.bot.admin_ids))
 async def admin_start_again(message: Message):
     sent_message = await message.answer(LEXICON_ADMIN['/start_again'][user_language(message)])
     await sleep(5)
@@ -44,7 +44,7 @@ async def admin_start_again(message: Message):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА КОМАНДУ START В ШТАТНОМ РЕЖИМЕ ДЛЯ АДМИНОВ #####
-@router.message(Command(commands='start'), IsAdmin(admins_config.bot.admins))
+@router.message(Command(commands='start'), IsAdmin(admins_config.bot.admin_ids))
 async def start_command(message: Message, state: FSMContext):
     await message.answer(text=LEXICON_ADMIN['/start']['ru'],
                          parse_mode='HTML')
@@ -52,7 +52,7 @@ async def start_command(message: Message, state: FSMContext):
 
 
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА ВЫВОД ФИДБЭКА ПОЛЬЗОАТЕЛЕЙ ДЛЯ АДМИНОВ #####
-@router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admins))
+@router.message(Command(commands='feedback'), IsAdmin(admins_config.bot.admin_ids))
 async def give_feedback(message: Message):
     await message.answer(text=data.all_feedback(message),
                          reply_markup=admin_kb.admin_feedback_keyboard(message),
@@ -60,7 +60,7 @@ async def give_feedback(message: Message):
 
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫЗОВ КОМАНДЫ HELP, А ТАКЖЕ ГЛАВНОГО МЕНЮ #####
-@router.message(Command(commands='help'), IsAdmin(admins_config.bot.admins))
+@router.message(Command(commands='help'), IsAdmin(admins_config.bot.admin_ids))
 async def command_help(message: Message, state: FSMContext):
     await state.clear()
     data.all_accessible_gifts(message)
