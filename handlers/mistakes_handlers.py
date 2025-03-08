@@ -53,12 +53,12 @@ async def incorrect_feedback(message: Message):
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ВЫЗОВ КОМАНДЫ HELP, А ТАКЖЕ ГЛАВНОГО МЕНЮ #####
 @router.message(Command(commands='help'))
-async def command_help(message: Message, state: FSMContext):
+async def command_help(message: Message, state: FSMContext, db_access):
     await state.clear()
-    data.all_accessible_gifts(message)
-    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)])
-    await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(message),
+    data.all_accessible_gifts(db_access, message)
+    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(db_access, message)])
+    await message.answer(text=LEXICON['main_menu'][data.user_language(db_access, message)],
+                         reply_markup=main_menu_keyboard(db_access, message),
                          parse_mode='HTML')
 
 

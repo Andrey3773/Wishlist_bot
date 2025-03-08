@@ -28,8 +28,8 @@ bot = Bot(token=config.bot.token)
 
 ##### ХЭНДЛЕР, ОТВЕЧАЮЩИЙ ЗА ПОТОРНЫЙ ВЫЗОВ КОМАНДЫ START #####
 @router.message(Command(commands='start'), IsUserInData())
-async def repeat_start_command(message: Message):
-    sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(message)],
+async def repeat_start_command(message: Message, db_access):
+    sent_message = await message.answer(text=LEXICON_COMMAND['/start_again'][data.user_language(db_access, message)],
                                         parse_mode='HTML')
     await sleep(10)
     await message.delete()
@@ -48,14 +48,14 @@ async def start_command(message: Message, state: FSMContext):
 
 ##### ХЭНДЛЕР ОТЕЧАЮЩИЙ ЗА УСПЕШНУЮ РЕГИСТРАЦИЮ #####
 @router.message(StateFilter(FSMCommands.fill_name), IsNameCorrect())
-async def correct_registration(message: Message, state: FSMContext):
-    data.new_user(message, message.text)
-    await message.answer(LEXICON['correct_registration'][data.user_language(message)][0] +
-                         data.give_name(message) +
-                         LEXICON['correct_registration'][data.user_language(message)][1])
+async def correct_registration(message: Message, state: FSMContext, db_access):
+    data.new_user(db_access, message, message.text)
+    await message.answer(LEXICON['correct_registration'][data.user_language(db_access, message)][0] +
+                         data.give_name(db_access, message) +
+                         LEXICON['correct_registration'][data.user_language(db_access, message)][1])
     await state.clear()
-    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(message)],
+    await message.answer(text=LEXICON_COMMAND['/help'][data.user_language(db_access, message)],
                          parse_mode='HTML')
-    await message.answer(text=LEXICON['main_menu'][data.user_language(message)],
-                         reply_markup=main_menu_keyboard(message),
+    await message.answer(text=LEXICON['main_menu'][data.user_language(db_access, message)],
+                         reply_markup=main_menu_keyboard(db_access, message),
                          parse_mode='HTML')

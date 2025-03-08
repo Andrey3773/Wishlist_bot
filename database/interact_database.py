@@ -23,11 +23,11 @@ def user_language(db_access: Database, message: Message|CallbackQuery) -> str:
 
     user_id = message.from_user.id
 
-    db.close()
     cursor.execute(f'SELECT language FROM Users WHERE user_id = {user_id}')
 
+    result = cursor.fetchone()[0]
     db.close()
-    return cursor.fetchone()[0]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ ИМЯ ПОЛЬЗОВАТЕЛЯ #####
@@ -43,8 +43,9 @@ def give_name(db_access: Database, message: Message|CallbackQuery) -> str:
     user_id = message.from_user.id
     cursor.execute(f'SELECT user_name FROM Users WHERE user_id = {user_id}')
 
+    result = cursor.fetchone()[0]
     db.close()
-    return cursor.fetchone()[0]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ USER_NAME ПО ЕГО ID ######
@@ -59,8 +60,9 @@ def get_user_name(db_access: Database, user_id: int) -> str:
 
     cursor.execute(f"SELECT user_name FROM Users WHERE user_id = {user_id}")
 
+    result = cursor.fetchone()[0]
     db.close()
-    return cursor.fetchone()[0]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ GROUP_NAME ПО ЕE ID ######
@@ -97,8 +99,9 @@ def get_gift_name(db_access: Database, gift_id: int) -> str:
 
     cursor.execute(f"SELECT gift_name FROM Gifts WHERE gift_id = {gift_id}")
 
+    result = cursor.fetchone()[0]
     db.close()
-    return cursor.fetchone()[0]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ GIVER_ID ПО GIFT_ID #####
@@ -113,8 +116,9 @@ def get_giver_id(db_access: Database, gift_id: int) -> int:
 
     cursor.execute(f"SELECT giver_id  FROM Gifts WHERE gift_id = {gift_id}")
 
+    result = cursor.fetchone()[0]
     db.close()
-    return cursor.fetchone()[0]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ СЛОВАРЬ ПОЛЬЗОВАТЕЛЕЙ ПО ГРУППАМ #####
@@ -195,8 +199,9 @@ def all_users_gifts(db_access: Database, message: Message|CallbackQuery) -> dict
         f"WHERE user_id = {message.from_user.id}"
     )
 
+    result = {row[0]: row[1] for row in cursor.fetchall()}
     db.close()
-    return {row[0]: row[1] for row in cursor.fetchall()}
+    return result
 
 
 ##### ВОЗВРАЩАЕТ СПИСОК ID ОТЗЫВОВ #####
@@ -211,8 +216,9 @@ def feedback_list(db_access: Database, ) -> list:
 
     cursor.execute("SELECT feedback_id FROM Feedback")
 
+    result = [row[0] for row in cursor.fetchall()]
     db.close()
-    return [row[0] for row in cursor.fetchall()]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ СПИСОК ID ПРОБЛЕМ #####
@@ -227,8 +233,9 @@ def issue_list(db_access: Database, ) -> list:
 
     cursor.execute("SELECT issue_id FROM Issues")
 
+    result = [row[0] for row in cursor.fetchall()]
     db.close()
-    return [row[0] for row in cursor.fetchall()]
+    return result
 
 
 
@@ -303,10 +310,11 @@ def all_gifts_by_user_in_group(db_access: Database, message: Message|CallbackQue
             cursor.execute(f"SELECT giver_id "
                            f"FROM Gifts "
                            f"WHERE gift_id = {gift}")
-            if cursor.fetchone()[0] == message.from_user.id:
+            giver_id = cursor.fetchone()[0]
+            if giver_id == message.from_user.id:
                 is_free = LEXICON['you_giver'][user_language(db_access, message)]
 
-            elif cursor.fetchone()[0] != 0:
+            elif giver_id != 0:
                 is_free = LEXICON['not_free_gift'][user_language(db_access, message)]
 
             else:
@@ -376,8 +384,10 @@ def all_issues(db_access: Database, message: Message | CallbackQuery) -> str:
     issues = ''
 
     cursor.execute('SELECT * FROM Issues')
-    if len(cursor.fetchall()) > 0:
-        for row in cursor.fetchall():
+    issues_data = cursor.fetchall()
+
+    if len(issues_data) > 0:
+        for row in issues_data:
             if row[2]:
                 issues += LEXICON_ADMIN['clothed_issue'][user_language(db_access, message)]
             else:
@@ -407,8 +417,9 @@ def user_in_data(db_access: Database, message: Message|CallbackQuery) -> bool:
 
     cursor.execute('SELECT user_id FROM Users')
 
+    result = user_id in [row[0] for row in cursor.fetchall()]
     db.close()
-    return user_id in [row[0] for row in cursor.fetchall()]
+    return result
 
 
 ##### ЗАНЕСЕНИЕ НОВОГО ПОЛЬЗОВАТЕЛЯ В БАЗУ ДАННЫХ #####
@@ -425,17 +436,17 @@ def new_user(db_access: Database, message: Message|CallbackQuery, user_name: str
     cursor.execute('SELECT user_id FROM Users')
 
     if user_id not in [row[0] for row in cursor.fetchall()]:
-        cursor.execute('INSERT INTO Users (user_id, user_name, language) VALUES (?, ?, ?)',
+        cursor.execute('INSERT INTO Users (user_id, user_name, language) VALUES (%s, %s, %s)',
                        (user_id, user_name, 'ru')
                        )
         db.commit()
-        cursor.execute('INSERT INTO Groups (group_name, password, owner_id) VALUES (?, ?, ?)',
+        cursor.execute('INSERT INTO Groups (group_name, password, owner_id) VALUES (%s, %s, %s)',
                        (str(user_id), str(user_id), user_id)
                        )
         db.commit()
         cursor.execute(f"SELECT group_id FROM Groups WHERE password = '{str(user_id)}'")
         group_id = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO Group_User (group_id, user_id) VALUES (?, ?)',
+        cursor.execute('INSERT INTO Group_User (group_id, user_id) VALUES (%s, %s)',
                        (group_id, int(user_id))
                        )
         db.commit()
@@ -464,8 +475,9 @@ def is_user_has_gift(db_access: Database, message: Message|CallbackQuery) -> boo
         f"WHERE user_id = {user_id}"
     )
 
+    result = gift_name in [row[0] for row in cursor.fetchall()]
     db.close()
-    return gift_name in [row[0] for row in cursor.fetchall()]
+    return result
 
 
 ##### ПРОВЕРЯЕТ, ЕСТЬ ЛИ ЗАДАННЫЙ ПОДАРОК В ЗАДАННОЙ ГРУППЕ #####
@@ -483,8 +495,9 @@ def is_gift_in_group(db_access: Database, group_id: int, gift_id: int) -> bool:
         f"WHERE gift_id = {gift_id}"
     )
 
+    result = [group_id, gift_id] in [[row[0], row[1]] for row in cursor.fetchall()]
     db.close()
-    return [group_id, gift_id] in [[row[0], row[1]] for row in cursor.fetchall()]
+    return result
 
 
 ##### СОЗДАЕТ НОВЫЙ ПОДАРОК, ПОКА НЕ ПРИВЯЗАННЫЙ НИ К ОДНОЙ ГРУППЕ, ВОЗВРАЩАЕТ ЕГО ID #####
@@ -538,12 +551,12 @@ def add_new_gift_in_group(db_access: Database, message: Message|CallbackQuery) -
 
             if not is_gift_in_group(db_access, group_id, gift_id):
                 cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
-                               f"VALUES (?, ?)", (group_id, gift_id))
+                               f"VALUES (%s, %s)", (group_id, gift_id))
                 db.commit()
     else:
         if not is_gift_in_group(db_access, chosen_group_id, gift_id):
             cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
-                           f"VALUES (?, ?)", (chosen_group_id, gift_id))
+                           f"VALUES (%s, %s)", (chosen_group_id, gift_id))
             db.commit()
 
     db.close()
@@ -600,7 +613,7 @@ def delete_gift(db_access: Database, message: Message|CallbackQuery) -> None:
     group_id = int(message.data[:message.data.rfind('_')])
     user_id = str(message.from_user.id)
 
-    cursor.execute(f"SELECT group_id FROM Groups WHERE password = {user_id}")
+    cursor.execute(f"SELECT group_id FROM Groups WHERE password = %s", (str(user_id),))
     if group_id == int(cursor.fetchone()[0]):
         cursor.execute(f"DELETE FROM Gifts WHERE gift_id = {gift_id}")
         db.commit()
@@ -638,8 +651,9 @@ def is_user_has_group(db_access: Database, message: Message|CallbackQuery) -> bo
         f"WHERE user_id = {user_id}"
     )
 
+    result = group_name in [row[0] for row in cursor.fetchall()]
     db.close()
-    return group_name in [row[0] for row in cursor.fetchall()]
+    return result
 
 
 ##### СОЗДАЁТ НОВУЮ ГРУППУ #####
@@ -665,7 +679,7 @@ def new_group(db_access: Database, message: Message|CallbackQuery) -> None:
             break
 
     cursor.execute(
-        f"INSERT INTO Groups (group_name, password, owner_id) VALUES (?, ?, ?)",
+        f"INSERT INTO Groups (group_name, password, owner_id) VALUES (%s, %s, %s)",
         (group_name, group_password, owner_id)
     )
     db.commit()
@@ -673,7 +687,7 @@ def new_group(db_access: Database, message: Message|CallbackQuery) -> None:
         f"SELECT group_id FROM Groups WHERE password = '{group_password}'"
     )
     cursor.execute(
-        f"INSERT INTO Group_User (group_id, user_id) VALUES (?, ?)",
+        f"INSERT INTO Group_User (group_id, user_id) VALUES (%s, %s)",
         (cursor.fetchone()[0], owner_id)
     )
     db.commit()
@@ -692,7 +706,7 @@ def new_group(db_access: Database, message: Message|CallbackQuery) -> None:
     for_everyone_gifts = [row[0] for row in cursor.fetchall()]
     for gift_id in for_everyone_gifts:
         cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
-                       f"VALUES (?, ?)", (group_id, gift_id))
+                       f"VALUES (%s, %s)", (group_id, gift_id))
         db.commit()
 
     db.close()
@@ -717,8 +731,9 @@ def is_user_in_group(db_access: Database, message: Message) -> bool:
         f"SELECT group_id, user_id FROM Group_User"
     )
 
+    result = [group_id, user_id] in [[row[0], row[1]] for row in cursor.fetchall()]
     db.close()
-    return [group_id, user_id] in [[row[0], row[1]] for row in cursor.fetchall()]
+    return result
 
 
 ##### ПРОВЕРЯЕТ, ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ГРУППА С ТАКИМ ЖЕ НАЗВАНИЕМ, КАК ТА, В КОТОРУЮ ПЫТАЕТСЯ ВСТУПИТЬ #####
@@ -742,8 +757,9 @@ def is_user_has_same_group(db_access: Database, message: Message|CallbackQuery) 
                    f"ON Groups.group_id = Group_User.group_id "
                    f"WHERE user_id = {user_id}")
 
+    result = group_name in [row[0] for row in cursor.fetchall()]
     db.close()
-    return group_name in [row[0] for row in cursor.fetchall()]
+    return result
 
 
 ##### ВОЗВРАЩАЕТ ПАРОЛЬ ОТ ГРУППЫ #####
@@ -800,7 +816,7 @@ def add_user_in_group(db_access: Database, message: Message) -> None:
     group_id = cursor.fetchone()[0]
 
     cursor.execute(
-        f"INSERT INTO Group_User (group_id, user_id) VALUES (?, ?)",
+        f"INSERT INTO Group_User (group_id, user_id) VALUES (%s, %s)",
         (group_id, user_id)
     )
     db.commit()
@@ -820,7 +836,7 @@ def add_user_in_group(db_access: Database, message: Message) -> None:
 
     for gift_id in for_everyone_gift_ids:
         cursor.execute(f"INSERT INTO Group_Gift (group_id, gift_id) "
-                       f"VALUES (?, ?)", (group_id, gift_id))
+                       f"VALUES (%s, %s)", (group_id, gift_id))
         db.commit()
 
     db.close()
@@ -839,10 +855,11 @@ def user_is_owner(db_access: Database, callback: CallbackQuery) -> bool:
     group_id = int(callback.data)
     user_id = callback.from_user.id
 
-    cursor.execute(f"SELECT owner_id FROM Groups WHERE group_id == {group_id}")
+    cursor.execute(f"SELECT owner_id FROM Groups WHERE group_id = {group_id}")
 
+    result = user_id == cursor.fetchone()[0]
     db.close()
-    return user_id == cursor.fetchone()[0]
+    return result
 
 
 ##### УДАЛЯЕТ ВЫБРАННУЮ ГРУППУ #####
