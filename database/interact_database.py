@@ -5,7 +5,6 @@
 
 import sqlite3, string, random
 from aiogram.types import Message, CallbackQuery
-from attr.validators import max_len
 
 from lexicon.lexicon import LEXICON, LEXICON_ADMIN, KEYBOARD_LEXICON
 
