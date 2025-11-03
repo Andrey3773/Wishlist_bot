@@ -5,6 +5,8 @@
 
 import sqlite3, string, random
 from aiogram.types import Message, CallbackQuery
+from attr.validators import max_len
+
 from lexicon.lexicon import LEXICON, LEXICON_ADMIN, KEYBOARD_LEXICON
 
 
@@ -655,3 +657,24 @@ def kill_issue(callback: Message|CallbackQuery) -> None:
 
     cursor.execute(f"DELETE FROM Issues WHERE issue_id = {feedback_id}")
     db.commit()
+
+
+def split_text(text: str) -> list:
+    max_length = 4096
+    parts = []
+    while text:
+        if len(text) > max_length:
+            # Ищем последний перенос строки или пробел перед максимальной длиной
+            split_pos = text.rfind('\n', 0, max_length)
+            if split_pos == -1:
+                split_pos = text.rfind(' ', 0, max_length)
+            if split_pos == -1:
+                split_pos = max_length
+
+            parts.append(text[:split_pos])
+            text = text[split_pos:].lstrip()
+        else:
+            parts.append(text)
+            break
+
+    return parts
