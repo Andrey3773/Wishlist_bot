@@ -37,10 +37,10 @@ async def my_list_button(callback: CallbackQuery):
 
     parts = data.split_text(text)
     for i, part in enumerate(parts[:-1]):
-        await callback.message.edit_text(text=part,
+        await callback.message.answer(text=part,
                                          parse_mode='HTML')
 
-    await callback.message.edit_text(text=parts[-1],
+    await callback.message.answer(text=parts[-1],
                                      reply_markup=kb.my_list_keyboard(callback),
                                      parse_mode='HTML')
 
