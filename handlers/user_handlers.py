@@ -29,7 +29,19 @@ bot = Bot(token=config.bot.token)
 ##### ХЭНДЛЕР, ОТЕЧАЮЩИЙ ЗА НАЖАТИЕ КНОПКИ MY LIST #####
 @router.callback_query(F.data == KEYBOARD_LEXICON['main_menu']['my_list']['callback'])
 async def my_list_button(callback: CallbackQuery):
-    await callback.message.edit_text(text=data.all_my_own_gifts(callback),
+    text = data.all_my_own_gifts(callback)
+    if len(text) <= 4096:
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb.my_list_keyboard(callback),
+                                         parse_mode='HTML')
+
+    parts = data.split_text(text)
+    for i, part in enumerate(parts[:-1]):
+        await callback.message.edit_text(text=part,
+                                         reply_markup=kb.my_list_keyboard(callback),
+                                         parse_mode='HTML')
+
+    await callback.message.edit_text(text=parts[-1],
                                      reply_markup=kb.my_list_keyboard(callback),
                                      parse_mode='HTML')
 
